@@ -81,6 +81,10 @@ require('packer').startup(function(use)
     tag = 'nightly'
   }
 
+  -- Markdown
+  -- install without yarn or npm
+  use 'iamcco/markdown-preview.nvim'
+
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
   if has_plugins then
