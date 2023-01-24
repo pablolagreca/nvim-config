@@ -84,7 +84,11 @@ require('packer').startup(function(use)
   -- Markdown
   -- install without yarn or npm
   use 'iamcco/markdown-preview.nvim'
-
+  -- nvim dap client 
+  use 'mfussenegger/nvim-dap'
+  use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"} }
+  -- Java jdtls plugin
+  use 'mfussenegger/nvim-jdtls'
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
   if has_plugins then
@@ -459,6 +463,18 @@ vim.opt.termguicolors = true
 require("nvim-tree").setup({
 })
 
+local dap, dapui = require("dap"), require("dapui")
+dapui.setup()
+dap.listeners.after.event_initialized["dapui_config"] = function()
+  dapui.open()
+end
+dap.listeners.before.event_terminated["dapui_config"] = function()
+  dapui.close()
+end
+dap.listeners.before.event_exited["dapui_config"] = function()
+  dapui.close()
+end
+
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
 --
@@ -517,8 +533,21 @@ function M.setup()
                   -- D = { ":lua vim.diagnostic.open_float()<cr>", "Show diagnostics - float" },
 		  f = { ":lua vim.lsp.buf.formatting()<cr>", "Format code" },
                   k = { ":lua vim.lsp.buf.hover()<cr>", "Hover information"}, -- TODO add description
-	          s = { ":lua vim.lsp.buf.signature_help()<cr>", "Signature help" }
+	          s = { ":lua vim.lsp.buf.signature_help()<cr>", "Signature help" },
+                  o = { ":lua require'jdtls'.organize_imports()<CR>", "Organize imports" },
+                  v = { ":lua require('jdtls').extract_variable()<CR>", "Extract variable" },
+                  c = { ":lua require('jdtls').extract_constant()<CR>", "Extract constant" },
+                  m = { ":lua require('jdtls').extract_method(true)<cr>", "Extract method" }
 	  },
+            
+          d = {
+                  name = "Debug",
+                  t = { ":lua require'jdtls'.test_class()<cr>", "Test method" },
+                  y = { ":lua require'jdtls'.test_nearest_method()<cr>", "Test nearest method" },
+                  o = { ":lua require('dapui').open()<cr>", "Open debugger UI" },
+                  c = { ":lua require('dapui').close()<cr>", "Close debugger UI" },
+                  b = { ":lua require'dap'.toggle_breakpoint()<cr>", "Toogle breakpoin" },
+          },
 
 
 	  e = {
@@ -590,6 +619,9 @@ function M.setup()
       b = "Comment block",
     }
   }
+  topLevelMappings["<F6>"] = { ":lua require'dap'.step_over()<cr>", "Debug - step over" }
+  topLevelMappings["<F7>"] = { ":lua require'dap'.step_into()<cr>", "Debug - Step into" }
+  topLevelMappings["<F5>"] = { ":lua require'dap'.continue()<cr>", "Debug - Continue" }
 
   whichkey.setup(conf)
   whichkey.register(mappings, opts)

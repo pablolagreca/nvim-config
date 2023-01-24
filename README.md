@@ -20,4 +20,6 @@ Before adding preservim/vim-markdown do
 
 Then add the plugin:
 
+### Java Language Server
 
+Use 'jdtls' from eclipse. To install follow this [video](https://www.youtube.com/watch?v=94IU4cBdhfM). Similar configuration is explained in the plugin page for using [jdtls with nvim](https://github.com/mfussenegger/nvim-jdtls)
