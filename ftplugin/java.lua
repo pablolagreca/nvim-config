@@ -61,13 +61,14 @@ local config = {
   -- See https://github.com/mfussenegger/nvim-jdtls#java-debug-installation
   --
   -- If you don't plan on using the debugger or other eclipse.jdt.ls plugins you can remove this
-  -- init_options = {
-  --   bundles = {
-  --     vim.fn.glob("/Users/plagreca/.config/nvim/extras/com.microsoft.java.debug.plugin-0.43.0.jar", true)
-  --   }
-  -- },
+  init_options = {
+    bundles = {
+      vim.fn.glob("/Users/plagreca/.config/nvim/extras/com.microsoft.java.debug.plugin-0.43.0.jar", true)
+    }
+  },
   on_attach = function(client, bufnr)
     require('jdtls').setup_dap()
+    require('jdtls.setup').add_commands()
   end
 }
 local bundles = {

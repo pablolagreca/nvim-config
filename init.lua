@@ -84,7 +84,7 @@ require('packer').startup(function(use)
   -- Markdown
   -- install without yarn or npm
   use 'iamcco/markdown-preview.nvim'
-  -- nvim dap client 
+  -- ndap client 
   use 'mfussenegger/nvim-dap'
   use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"} }
   -- Java jdtls plugin
@@ -553,18 +553,26 @@ end
 dap.listeners.before.event_exited["dapui_config"] = function()
   dapui.close()
 end
-
+dap.configurations.java = {
+  {
+    type = 'java',
+    request = 'attach',
+    name = "Debug (attach) - Remote",
+    hostName = "127.0.0.1",
+    port = 5005
+  }
+}
 
 function attach_to_debug()
-  dap.configurations.java = {
-    {
-      type= 'executable';
-      request = 'attach';
-      name = "Attach to the process";
-      hostName = "localhost";
-      port = "5005";
-    },
-  }
+  -- dap.configurations.java = {
+  --   {
+  --     type= 'executable';
+  --     request = 'attach';
+  --     name = "Attach to the process";
+  --     hostName = "localhost";
+  --     port = "5005";
+  --   },
+  -- }
   dap.continue()
 end
 
