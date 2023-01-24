@@ -251,7 +251,7 @@ vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { de
 -- See `:help nvim-treesitter`
 require('nvim-treesitter.configs').setup {
   -- Add languages to be installed here that you want installed for treesitter
-  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'typescript', 'help', 'vim' },
+  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'typescript', 'help', 'vim', 'java'},
 
   highlight = { enable = true },
   indent = { enable = true, disable = { 'python' } },
@@ -464,7 +464,86 @@ require("nvim-tree").setup({
 })
 
 local dap, dapui = require("dap"), require("dapui")
-dapui.setup()
+dapui.setup({
+  icons = { expanded = "", collapsed = "", current_frame = "" },
+  mappings = {
+    -- Use a table to apply multiple mappings
+    expand = { "<CR>", "<2-LeftMouse>" },
+    open = "o",
+    remove = "d",
+    edit = "e",
+    repl = "r",
+    toggle = "t",
+  },
+  -- Use this to override mappings for specific elements
+  element_mappings = {
+    -- Example:
+    -- stacks = {
+    --   open = "<CR>",
+    --   expand = "o",
+    -- }
+  },
+  -- Expand lines larger than the window
+  -- Requires >= 0.7
+  expand_lines = vim.fn.has("nvim-0.7") == 1,
+  -- Layouts define sections of the screen to place windows.
+  -- The position can be "left", "right", "top" or "bottom".
+  -- The size specifies the height/width depending on position. It can be an Int
+  -- or a Float. Integer specifies height/width directly (i.e. 20 lines/columns) while
+  -- Float value specifies percentage (i.e. 0.3 - 30% of available lines/columns)
+  -- Elements are the elements shown in the layout (in order).
+  -- Layouts are opened in order so that earlier layouts take priority in window sizing.
+  layouts = {
+    {
+      elements = {
+      -- Elements can be strings or table with id and size keys.
+        { id = "scopes", size = 0.25 },
+        "breakpoints",
+        "stacks",
+        "watches",
+      },
+      size = 40, -- 40 columns
+      position = "left",
+    },
+    {
+      elements = {
+        "repl",
+        "console",
+      },
+      size = 0.25, -- 25% of total lines
+      position = "bottom",
+    },
+  },
+  controls = {
+    -- Requires Neovim nightly (or 0.8 when released)
+    enabled = true,
+    -- Display controls in this element
+    element = "repl",
+    icons = {
+      pause = "",
+      play = "",
+      step_into = "",
+      step_over = "",
+      step_out = "",
+      step_back = "",
+      run_last = "",
+      terminate = "",
+    },
+  },
+  floating = {
+    max_height = nil, -- These can be integers or a float between 0 and 1.
+    max_width = nil, -- Floats will be treated as percentage of your screen.
+    border = "single", -- Border style. Can be "single", "double" or "rounded"
+    mappings = {
+      close = { "q", "<Esc>" },
+    },
+  },
+  windows = { indent = 1 },
+  render = {
+    max_type_length = nil, -- Can be integer or nil.
+    max_value_lines = 100, -- Can be integer or nil.
+  }
+})
 dap.listeners.after.event_initialized["dapui_config"] = function()
   dapui.open()
 end
@@ -475,11 +554,65 @@ dap.listeners.before.event_exited["dapui_config"] = function()
   dapui.close()
 end
 
+
+function attach_to_debug()
+  dap.configurations.java = {
+    {
+      type= 'executable';
+      request = 'attach';
+      name = "Attach to the process";
+      hostName = "localhost";
+      port = "5005";
+    },
+  }
+  dap.continue()
+end
+
+-- run debug
+function get_test_runner(test_name, debug)
+  if debug then
+    return 'mvn test -o -Dmaven.surefire.debug -Dtest="' .. test_name .. '"' 
+  end
+  return 'mvn test -o -Dtest="' .. test_name .. '"' 
+end
+
+function run_java_test_method(debug)
+  local utils = require'utils'
+  local method_name = utils.get_current_full_method_name("\\#")
+  vim.cmd('term ' .. get_test_runner(method_name, debug))
+end
+
+function run_java_test_class(debug)
+  local utils = require'utils'
+  local class_name = utils.get_current_full_class_name()
+  vim.cmd('term ' .. get_test_runner(class_name, debug))
+end
+      
+function get_spring_boot_runner(profile, debug)
+  local debug_param = ""
+  if debug then
+    debug_param = ' -Dspring-boot.run.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005" '
+  end 
+
+  local profile_param = ""
+  if profile then
+    profile_param = " -Dspring-boot.run.profiles=" .. profile .. " "
+  end
+
+  return 'mvn spring-boot:run -o ' .. profile_param .. debug_param
+end
+
+function run_spring_boot(debug)
+  vim.cmd('term ' .. get_spring_boot_runner(method_name, debug))
+end
+
+--TODO CMP setup for debugger REPL: https://www.youtube.com/watch?v=kbRIosrvof0
+
+
+
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
 --
-require('which-key').setup {
-}
 
 local M = {}
 
@@ -542,11 +675,19 @@ function M.setup()
             
           d = {
                   name = "Debug",
-                  t = { ":lua require'jdtls'.test_class()<cr>", "Test method" },
+                  a = { ":lua attach_to_debug()<cr>","Attach to debug" },
+                  t = {
+                    name = "Test",
+                    m = { ":lua run_java_test_method(true)<cr>", "Test method" },
+                    c = { ":lua run_java_test_class(true)<cr>", "Test class" }
+                  },
                   y = { ":lua require'jdtls'.test_nearest_method()<cr>", "Test nearest method" },
                   o = { ":lua require('dapui').open()<cr>", "Open debugger UI" },
                   c = { ":lua require('dapui').close()<cr>", "Close debugger UI" },
                   b = { ":lua require'dap'.toggle_breakpoint()<cr>", "Toogle breakpoin" },
+                  B = { ":lua request'dap'.toggle_breakpoint(vim.fn.input('Condition: '))<cr>", "Toogle conditional endpoint" },
+                  l = { ":lua request'dap'.toggle_breakpoint(nil, nil, vim.fn.input('Log: '))<cr>", "Toogle log breakpoint" },
+                  r = { ":lua request'dap'.repl.open()<cr>", "Open REPL" }
           },
 
 
@@ -586,8 +727,13 @@ function M.setup()
 	  },
 
 	  r = {
-		  name = "Refactor",
-		  r = { "Rename" }
+		  name = "Refactor / Run",
+		  r = { "Rename" },
+                  t = {
+                    name = "Test",
+                    m = { ":lua run_java_test_method()<cr>", "Test method" },
+                    c = { ":lua run_java_test_class()<cr>", "Test class" }
+                  },
 	  },
 
           t = {
@@ -601,7 +747,7 @@ function M.setup()
   local mappingsTerminal = {
 
 	  u = {
-		  name = "Utilities",
+		  nam = "tilities",
 		  t = { "<cmd>FloatermNew<cr>", "New terminal" },
 		  u = { "<cmd>FloatermToggle<cr>", "Terminal toggle" },
 		  y = { "<cmd>FloatermNext<cr>", "Next terminal" },
@@ -621,7 +767,11 @@ function M.setup()
   }
   topLevelMappings["<F6>"] = { ":lua require'dap'.step_over()<cr>", "Debug - step over" }
   topLevelMappings["<F7>"] = { ":lua require'dap'.step_into()<cr>", "Debug - Step into" }
-  topLevelMappings["<F5>"] = { ":lua require'dap'.continue()<cr>", "Debug - Continue" }
+  topLevelMappings["<F5>"] = { ":lua require'dap'.continue()<cr>", "Debug - Continue " }
+  vim.keymap.set("n", "<F10>", function() run_spring_boot() end)
+  vim.keymap.set("n", "<F11>", function() run_spring_boot(true) end)
+  topLevelMappings["<F10>"] = { "Run application" }
+  topLevelMappings["<F11>"] = { "Debug application" }
 
   whichkey.setup(conf)
   whichkey.register(mappings, opts)
