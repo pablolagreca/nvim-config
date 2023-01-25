@@ -108,13 +108,10 @@ require('packer').startup(function(use)
   use 'mfussenegger/nvim-jdtls'
   -- TODO configure well Saga once nvim 0.9 it's out
   -- Lsp Saga for popups in LSP calls
-  -- use({
-  --     "glepnir/lspsaga.nvim",
-  --     branch = "main",
-  --     config = function()
-  --         require('lspsaga').setup({})
-  --     end,
-  -- })
+  use({
+    "glepnir/lspsaga.nvim",
+    branch = "main",
+  })
 
   use 'tpope/vim-surround'
   use 'windwp/nvim-autopairs'
@@ -240,7 +237,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 require('lualine').setup {
   options = {
     icons_enabled = false,
-    theme = 'onedark',
     component_separators = '|',
     section_separators = '',
   },
@@ -308,7 +304,7 @@ vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { de
 -- See `:help nvim-treesitter`
 require('nvim-treesitter.configs').setup {
   -- Add languages to be installed here that you want installed for treesitter
-  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'typescript', 'help', 'vim', 'java' },
+  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'markdown', 'python', 'rust', 'typescript', 'help', 'vim', 'java' },
 
   highlight = { enable = true },
   indent = { enable = true, disable = { 'python' } },
@@ -388,27 +384,6 @@ local on_attach = function(_, bufnr)
 
     vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
   end
-
-  -- Moved to whichkey
-  -- nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
-  -- nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
-  --
-  -- nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
-  -- nmap('<leader>D', vim.lsp.buf.type_definition, 'Type [D]efinition')
-  -- nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
-  -- nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
-  --
-  -- See `:help K` for why this keymap
-  -- nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
-  -- nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
-
-  -- Lesser used LSP functionality
-  -- nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
-  -- nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
-  -- nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
-  -- nmap('<leader>wl', function()
-  --   print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-  -- end, '[W]orkspace [L]ist Folders')
 
   -- Create a command `:Format` local to the LSP buffer
   vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
@@ -551,6 +526,23 @@ local autopairs_setup, autopairs = pcall(require, "nvim-autopairs")
 if not autopairs_setup then
   return
 end
+
+
+-- LSP Saga configuration
+require('lspsaga').setup({
+  -- keybinds for navigation in lspsaga window
+  scroll_preview = { scroll_down = "<C-f>", scroll_up = "<C-b>" },
+  -- use enter to open file with definition preview
+  definition = {
+    edit = "<CR>",
+  },
+  ui = {
+    colors = {
+      normal_bg = "#022746",
+    },
+  },
+})
+
 
 -- configure autopairs
 autopairs.setup({
@@ -790,16 +782,17 @@ function M.setup()
 
     c = {
       name = "Code",
-      a = { ":lua vim.lsp.buf.rename()<cr>", "Code action" },
-      d = { ":lua vim.diagnostic.setloclist()<cr>", "Show diagnostics" },
-      -- D = { ":lua vim.diagnostic.open_float()<cr>", "Show diagnostics - float" },
-      f = { ":lua vim.lsp.buf.formatting()<cr>", "Format code" },
-      k = { ":lua vim.lsp.buf.hover()<cr>", "Hover information" }, -- TODO add description
-      s = { ":lua vim.lsp.buf.signature_help()<cr>", "Signature help" },
-      o = { ":lua require'jdtls'.organize_imports()<CR>", "Organize imports" },
-      v = { ":lua require('jdtls').extract_variable()<CR>", "Extract variable" },
+      a = { "<cmd>Lspsaga code_action<CR>", "Code action" },
       c = { ":lua require('jdtls').extract_constant()<CR>", "Extract constant" },
-      m = { ":lua require('jdtls').extract_method(true)<cr>", "Extract method" }
+      f = { ":lua vim.lsp.buf.formatting()<cr>", "Format code" },
+      m = { ":lua require('jdtls').extract_method(true)<cr>", "Extract method" },
+      o = { ":lua require'jdtls'.organize_imports()<CR>", "Organize imports" },
+      r = {
+        name = "Rename",
+        r = { "<cmd>Lspsaga rename<CR>", "Rename symbol"},
+        w = { "<cmd>Lspsaga rename ++project<CR>", "Rename word"},
+      },
+      v = { ":lua require('jdtls').extract_variable()<CR>", "Extract variable" },
     },
 
     d = {
@@ -870,7 +863,7 @@ function M.setup()
   local mappingsTerminal = {
 
     u = {
-      nam = "tilities",
+      name = "Utilities",
       t = { "<cmd>FloatermNew<cr>", "New terminal" },
       u = { "<cmd>FloatermToggle<cr>", "Terminal toggle" },
       y = { "<cmd>FloatermNext<cr>", "Next terminal" },
@@ -882,18 +875,29 @@ function M.setup()
   topLevelMappings["["] = { d = "Previous diagnostic" }
   topLevelMappings["]"] = { d = "Next diagnostic" }
   topLevelMappings["g"] = {
+    name = "Go to",
     c = {
-      name = "Comment",
-      c = "Comment line",
-      b = "Comment block",
+      name = "Call hierarchy / Comment",
+      c = { "Comment line" },
+      b = { "Comment block" },
+      i = { "<cmd>Lspsaga incoming_calls<CR>", "Incoming calls" },
+      o = { "<cmd>Lspsaga outgoing_calls<CR>", "Outgoing calls" },
     },
-    d = { ":lua vim.lsp.buf.definition()<cr>", "Go to definition" },
-    D = { ":lua vim.lsp.buf.declaration()<cr>", "Go to declaration" },
+    d = { "<cmd>Lspsaga peek_definition<CR>", "Peek definition" },
+    D = { "<cmd>Lspsaga goto_definition<CR>", "Go to declaration" },
+    e = { "<cmd>Lspsaga show_line_diagnostics<CR>", "Show line diagnostics" },
+    f = { "<cmd>Lspsaga lsp_finder<CR>", "Find symbol" },
+    h = { "<cmd>Lspsaga hover_doc<CR>", "Hover docs"},
     i = { ":lua vim.lsp.buf.implementation()<cr>", "Go to implementation" },
+    k = { "<cmd>Lspsaga hover_doc ++keep<CR>", "Hover docs - keep window" },
+    o = { "<cmd>Lspsaga outline<CR>", "Toggle outline" },
     r = { ":lua require('telescope.builtin').lsp_references()<cr>", "Find references" },
-    s = { ":lua require('telescope.builtin').lsp_document_symbols()<cr>", "Go to document symbol" },
+    s = { ":lua vim.lsp.buf.signature_help()<cr>", "Signature help" },
+    S = { ":lua require('telescope.builtin').lsp_document_symbols()<cr>", "Go to document symbol" },
     t = { ":lua vim.lsp.buf.type_definition()<cr>", "Go to type definition" },
     w = { ":lua require('telescope.builtin').lsp_dynamic_workspace_symbols()<cr>", "Go to workspace symbol" },
+    ["["] = { "Lspsaga diagnostic_jump_prev", "Show previous diagnostics" },
+    ["]"] = { "Lspsaga diagnostic_jump_next", "Show next diagnostics" },
   }
   topLevelMappings["<F6>"] = { ":lua require'dap'.step_over()<cr>", "Debug - step over" }
   topLevelMappings["<F7>"] = { ":lua require'dap'.step_into()<cr>", "Debug - Step into" }
