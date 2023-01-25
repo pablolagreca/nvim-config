@@ -27,7 +27,8 @@ require('packer').startup(function(use)
 
   use { -- Autocompletion
     'hrsh7th/nvim-cmp',
-    requires = { 'hrsh7th/cmp-nvim-lsp', 'L3MON4D3/LuaSnip', 'saadparwaiz1/cmp_luasnip' },
+    requires = { 'hrsh7th/cmp-nvim-lsp', 'L3MON4D3/LuaSnip', 'saadparwaiz1/cmp_luasnip', 
+      'hrsh7th/cmp-buffer', 'hrsh7th/cmp-path' },
   }
 
   use { -- Highlight, edit, and navigate code
@@ -89,6 +90,15 @@ require('packer').startup(function(use)
   use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"} }
   -- Java jdtls plugin
   use 'mfussenegger/nvim-jdtls'
+  -- TODO configure well Saga once nvim 0.9 it's out
+  -- Lsp Saga for popups in LSP calls
+  -- use({
+  --     "glepnir/lspsaga.nvim",
+  --     branch = "main",
+  --     config = function()
+  --         require('lspsaga').setup({})
+  --     end,
+  -- })
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
   if has_plugins then
@@ -191,6 +201,9 @@ require('lualine').setup {
     section_separators = '',
   },
 }
+
+
+
 
 -- Enable Comment.nvim
 require('Comment').setup()
@@ -449,6 +462,8 @@ cmp.setup {
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
+    { name = 'path' },
+    { name = 'buffer' },
   },
 }
 
@@ -562,6 +577,11 @@ dap.configurations.java = {
     port = 5005
   }
 }
+
+function show_dap_centered_scopes() 
+  local widgets = require'dap.ui.widgets'
+  widgets.centered_float(widgets.scopes)
+end
 
 function attach_to_debug()
   -- dap.configurations.java = {
@@ -693,9 +713,10 @@ function M.setup()
                   o = { ":lua require('dapui').open()<cr>", "Open debugger UI" },
                   c = { ":lua require('dapui').close()<cr>", "Close debugger UI" },
                   b = { ":lua require'dap'.toggle_breakpoint()<cr>", "Toogle breakpoin" },
-                  B = { ":lua request'dap'.toggle_breakpoint(vim.fn.input('Condition: '))<cr>", "Toogle conditional endpoint" },
-                  l = { ":lua request'dap'.toggle_breakpoint(nil, nil, vim.fn.input('Log: '))<cr>", "Toogle log breakpoint" },
-                  r = { ":lua request'dap'.repl.open()<cr>", "Open REPL" }
+                  B = { ":lua require'dap'.toggle_breakpoint(vim.fn.input('Condition: '))<cr>", "Toogle conditional endpoint" },
+                  l = { ":lua require'dap'.toggle_breakpoint(nil, nil, vim.fn.input('Log: '))<cr>", "Toogle log breakpoint" },
+                  r = { ":lua request'dap'.repl.open()<cr>", "Open REPL" },
+                  s = { ":lua show_dap_centered_scopes()<cr>", "Show debug scopes" }
           },
 
 

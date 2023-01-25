@@ -89,10 +89,20 @@ _G.packer_plugins = {
     path = "/Users/plagreca/.local/share/nvim/site/pack/packer/start/bclose.vim",
     url = "https://github.com/rbgrouleff/bclose.vim"
   },
+  ["cmp-buffer"] = {
+    loaded = true,
+    path = "/Users/plagreca/.local/share/nvim/site/pack/packer/start/cmp-buffer",
+    url = "https://github.com/hrsh7th/cmp-buffer"
+  },
   ["cmp-nvim-lsp"] = {
     loaded = true,
     path = "/Users/plagreca/.local/share/nvim/site/pack/packer/start/cmp-nvim-lsp",
     url = "https://github.com/hrsh7th/cmp-nvim-lsp"
+  },
+  ["cmp-path"] = {
+    loaded = true,
+    path = "/Users/plagreca/.local/share/nvim/site/pack/packer/start/cmp-path",
+    url = "https://github.com/hrsh7th/cmp-path"
   },
   cmp_luasnip = {
     loaded = true,
@@ -148,6 +158,11 @@ _G.packer_plugins = {
     loaded = true,
     path = "/Users/plagreca/.local/share/nvim/site/pack/packer/start/nvim-dap",
     url = "https://github.com/mfussenegger/nvim-dap"
+  },
+  ["nvim-dap-ui"] = {
+    loaded = true,
+    path = "/Users/plagreca/.local/share/nvim/site/pack/packer/start/nvim-dap-ui",
+    url = "https://github.com/rcarriga/nvim-dap-ui"
   },
   ["nvim-jdtls"] = {
     loaded = true,
