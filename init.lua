@@ -58,7 +58,6 @@ require('packer').startup(function(use)
     'nvim-treesitter/nvim-treesitter-textobjects',
     after = 'nvim-treesitter',
   }
-
   -- Git related plugins
   use 'tpope/vim-fugitive'
   use 'tpope/vim-rhubarb'
@@ -840,8 +839,7 @@ function M.setup()
     },
 
     r = {
-      name = "Refactor / Run",
-      r = { "Rename" },
+      name = "Run",
       t = {
         name = "Test",
         m = { ":lua run_java_test_method()<cr>", "Test method" },
