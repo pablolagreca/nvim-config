@@ -6,9 +6,25 @@ if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
 
 end
 
+-- Autocommand that reloads neovim whenever you save this file
+vim.cmd([[
+  augroup packer_user_config
+    autocmd!
+    autocmd BufWritePost init.lua source <afile> | PackerSync
+  augroup end
+]])
+
+local status, packer = pcall(require, 'packer')
+if not status then
+  return
+end
+
+
 require('packer').startup(function(use)
   -- Package manager
   use 'wbthomason/packer.nvim'
+
+  use 'bluz71/vim-nightfly-guicolors'
 
   use { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
@@ -27,7 +43,7 @@ require('packer').startup(function(use)
 
   use { -- Autocompletion
     'hrsh7th/nvim-cmp',
-    requires = { 'hrsh7th/cmp-nvim-lsp', 'L3MON4D3/LuaSnip', 'saadparwaiz1/cmp_luasnip', 
+    requires = { 'hrsh7th/cmp-nvim-lsp', 'L3MON4D3/LuaSnip', 'saadparwaiz1/cmp_luasnip',
       'hrsh7th/cmp-buffer', 'hrsh7th/cmp-path' },
   }
 
@@ -61,15 +77,15 @@ require('packer').startup(function(use)
   use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make', cond = vim.fn.executable 'make' == 1 }
 
   -- Ranger for file explorer
-  use  'francoiscabrol/ranger.vim'
+  use 'francoiscabrol/ranger.vim'
   use 'rbgrouleff/bclose.vim'
 
   -- Whichkey
   use { 'folke/which-key.nvim', config = function()
-        vim.o.timeout = true
-        vim.o.timeoutlen = 300
-	end,
-      }
+    vim.opt.timeout = true
+    vim.opt.timeoutlen = 300
+  end,
+  }
   -- FloatTerm
   use 'voldikss/vim-floaterm'
 
@@ -85,9 +101,9 @@ require('packer').startup(function(use)
   -- Markdown
   -- install without yarn or npm
   use 'iamcco/markdown-preview.nvim'
-  -- ndap client 
+  -- ndap client
   use 'mfussenegger/nvim-dap'
-  use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"} }
+  use { "rcarriga/nvim-dap-ui", requires = { "mfussenegger/nvim-dap" } }
   -- Java jdtls plugin
   use 'mfussenegger/nvim-jdtls'
   -- TODO configure well Saga once nvim 0.9 it's out
@@ -135,35 +151,58 @@ vim.api.nvim_create_autocmd('BufWritePost', {
 -- See `:help vim.o`
 
 -- Set highlight on search
-vim.o.hlsearch = false
+vim.opt.hlsearch = true
+vim.opt.incsearch = true
 
 -- Make line numbers default
 vim.wo.number = true
+vim.opt.relativenumber = true
+
+-- Indenting
+vim.opt.tabstop = 2
+vim.opt.shiftwidth = 2
+vim.opt.expandtab = true
+vim.opt.autoindent = true
+
+-- cursor line
+vim.opt.cursorline = true
+vim.opt.background = 'dark'
+vim.opt.signcolumn = 'yes'
+
+-- clipboard
+vim.opt.clipboard:append("unnamedplus")
+
+-- split windows
+vim.opt.splitright = true
+vim.opt.splitbelow = true
+
+vim.opt.iskeyword:append('-')
 
 -- Enable mouse mode
-vim.o.mouse = 'a'
+vim.opt.mouse = 'a'
 
 -- Enable break indent
-vim.o.breakindent = true
+vim.opt.breakindent = true
+
 
 -- Save undo history
-vim.o.undofile = true
+vim.opt.undofile = true
 
 -- Case insensitive searching UNLESS /C or capital in search
-vim.o.ignorecase = true
-vim.o.smartcase = true
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
 
 -- Decrease update time
-vim.o.updatetime = 250
+vim.opt.updatetime = 250
 vim.wo.signcolumn = 'yes'
 
 -- Set colorscheme
-vim.o.termguicolors = true
+vim.opt.termguicolors = true
 -- vim.cmd [[colorscheme onedark]]
-vim.cmd [[colorscheme jellybeans]]
+vim.cmd [[colorscheme nightfly]]
 
 -- Set completeopt to have a better completion experience
-vim.o.completeopt = 'menuone,noselect'
+vim.opt.completeopt = 'menuone,noselect'
 
 -- [[ Basic Keymaps ]]
 -- Set <space> as the leader key
@@ -179,6 +218,9 @@ vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
 -- Remap for dealing with word wrap
 vim.keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })
 vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
+
+-- Move to normal mode more easy
+vim.keymap.set('i', 'jk', '<ESC>')
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
@@ -196,7 +238,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 require('lualine').setup {
   options = {
     icons_enabled = false,
-    theme = 'onedark',
     component_separators = '|',
     section_separators = '',
   },
@@ -264,7 +305,7 @@ vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { de
 -- See `:help nvim-treesitter`
 require('nvim-treesitter.configs').setup {
   -- Add languages to be installed here that you want installed for treesitter
-  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'typescript', 'help', 'vim', 'java'},
+  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'typescript', 'help', 'vim', 'java' },
 
   highlight = { enable = true },
   indent = { enable = true, disable = { 'python' } },
@@ -511,7 +552,7 @@ dapui.setup({
   layouts = {
     {
       elements = {
-      -- Elements can be strings or table with id and size keys.
+        -- Elements can be strings or table with id and size keys.
         { id = "scopes", size = 0.25 },
         "breakpoints",
         "stacks",
@@ -578,8 +619,8 @@ dap.configurations.java = {
   }
 }
 
-function show_dap_centered_scopes() 
-  local widgets = require'dap.ui.widgets'
+function show_dap_centered_scopes()
+  local widgets = require 'dap.ui.widgets'
   widgets.centered_float(widgets.scopes)
 end
 
@@ -599,28 +640,28 @@ end
 -- run debug
 function get_test_runner(test_name, debug)
   if debug then
-    return 'mvn test -o -Dmaven.surefire.debug -Dtest="' .. test_name .. '"' 
+    return 'mvn test -o -Dmaven.surefire.debug -Dtest="' .. test_name .. '"'
   end
-  return 'mvn test -o -Dtest="' .. test_name .. '"' 
+  return 'mvn test -o -Dtest="' .. test_name .. '"'
 end
 
 function run_java_test_method(debug)
-  local utils = require'utils'
+  local utils = require 'utils'
   local method_name = utils.get_current_full_method_name("\\#")
   vim.cmd('term ' .. get_test_runner(method_name, debug))
 end
 
 function run_java_test_class(debug)
-  local utils = require'utils'
+  local utils = require 'utils'
   local class_name = utils.get_current_full_class_name()
   vim.cmd('term ' .. get_test_runner(class_name, debug))
 end
-      
+
 function get_spring_boot_runner(profile, debug)
   local debug_param = ""
   if debug then
     debug_param = ' -Dspring-boot.run.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005" '
-  end 
+  end
 
   local profile_param = ""
   if profile then
@@ -673,114 +714,107 @@ function M.setup()
   }
 
   local mappings = {
-	  --["l"] = { "<cmd>:source .session.vim<cr>" },
-	  ["w"] = { "<cmd>update!<CR>", "Save" },
-	 -- ["q"] = { "<cmd>q!<CR>", "Quit" },
-          ["?"] = { "Find recently open files" },
-          ["<space>"] = { "Find existing buffers" },
-          ["/"] = { "Fuzzily search in current file" },
-	  --["x"] = { "<cmd>Win<CR>", "Select window" },
+    --["l"] = { "<cmd>:source .session.vim<cr>" },
+    ["w"] = { "<cmd>update!<CR>", "Save" },
+    -- ["q"] = { "<cmd>q!<CR>", "Quit" },
+    ["?"] = { "Find recently open files" },
+    ["<space>"] = { "Find existing buffers" },
+    ["/"] = { "Fuzzily search in current file" },
+    --["x"] = { "<cmd>Win<CR>", "Select window" },
 
-	  b = {
-		  name = "Buffer",
-		  c = { "<Cmd>bd!<Cr>", "Close current buffer" },
-		  D = { "<Cmd>%bd|e#|bd#<Cr>", "Delete all buffers" },
-	  },
+    b = {
+      name = "Buffer",
+      c = { "<Cmd>bd!<Cr>", "Close current buffer" },
+      D = { "<Cmd>%bd|e#|bd#<Cr>", "Delete all buffers" },
+    },
 
-	  c = {
-		  name = "Code",
-		  a = { ":lua vim.lsp.buf.rename()<cr>", "Code action" },
-                  d = { ":lua vim.diagnostic.setloclist()<cr>", "Show diagnostics" },
-                  -- D = { ":lua vim.diagnostic.open_float()<cr>", "Show diagnostics - float" },
-		  f = { ":lua vim.lsp.buf.formatting()<cr>", "Format code" },
-                  k = { ":lua vim.lsp.buf.hover()<cr>", "Hover information"}, -- TODO add description
-	          s = { ":lua vim.lsp.buf.signature_help()<cr>", "Signature help" },
-                  o = { ":lua require'jdtls'.organize_imports()<CR>", "Organize imports" },
-                  v = { ":lua require('jdtls').extract_variable()<CR>", "Extract variable" },
-                  c = { ":lua require('jdtls').extract_constant()<CR>", "Extract constant" },
-                  m = { ":lua require('jdtls').extract_method(true)<cr>", "Extract method" }
-	  },
-            
-          d = {
-                  name = "Debug",
-                  a = { ":lua attach_to_debug()<cr>","Attach to debug" },
-                  t = {
-                    name = "Test",
-                    m = { ":lua run_java_test_method(true)<cr>", "Test method" },
-                    c = { ":lua run_java_test_class(true)<cr>", "Test class" }
-                  },
-                  y = { ":lua require'jdtls'.test_nearest_method()<cr>", "Test nearest method" },
-                  o = { ":lua require('dapui').open()<cr>", "Open debugger UI" },
-                  c = { ":lua require('dapui').close()<cr>", "Close debugger UI" },
-                  b = { ":lua require'dap'.toggle_breakpoint()<cr>", "Toogle breakpoin" },
-                  B = { ":lua require'dap'.toggle_breakpoint(vim.fn.input('Condition: '))<cr>", "Toogle conditional endpoint" },
-                  l = { ":lua require'dap'.toggle_breakpoint(nil, nil, vim.fn.input('Log: '))<cr>", "Toogle log breakpoint" },
-                  r = { ":lua request'dap'.repl.open()<cr>", "Open REPL" },
-                  s = { ":lua show_dap_centered_scopes()<cr>", "Show debug scopes" }
-          },
+    c = {
+      name = "Code",
+      a = { ":lua vim.lsp.buf.rename()<cr>", "Code action" },
+      d = { ":lua vim.diagnostic.setloclist()<cr>", "Show diagnostics" },
+      -- D = { ":lua vim.diagnostic.open_float()<cr>", "Show diagnostics - float" },
+      f = { ":lua vim.lsp.buf.formatting()<cr>", "Format code" },
+      k = { ":lua vim.lsp.buf.hover()<cr>", "Hover information" }, -- TODO add description
+      s = { ":lua vim.lsp.buf.signature_help()<cr>", "Signature help" },
+      o = { ":lua require'jdtls'.organize_imports()<CR>", "Organize imports" },
+      v = { ":lua require('jdtls').extract_variable()<CR>", "Extract variable" },
+      c = { ":lua require('jdtls').extract_constant()<CR>", "Extract constant" },
+      m = { ":lua require('jdtls').extract_method(true)<cr>", "Extract method" }
+    },
+
+    d = {
+      name = "Debug",
+      a = { ":lua attach_to_debug()<cr>", "Attach to debug" },
+      t = {
+        name = "Test",
+        m = { ":lua run_java_test_method(true)<cr>", "Test method" },
+        c = { ":lua run_java_test_class(true)<cr>", "Test class" }
+      },
+      y = { ":lua require'jdtls'.test_nearest_method()<cr>", "Test nearest method" },
+      o = { ":lua require('dapui').open()<cr>", "Open debugger UI" },
+      c = { ":lua require('dapui').close()<cr>", "Close debugger UI" },
+      b = { ":lua require'dap'.toggle_breakpoint()<cr>", "Toogle breakpoin" },
+      B = { ":lua require'dap'.toggle_breakpoint(vim.fn.input('Condition: '))<cr>", "Toogle conditional endpoint" },
+      l = { ":lua require'dap'.toggle_breakpoint(nil, nil, vim.fn.input('Log: '))<cr>", "Toogle log breakpoint" },
+      r = { ":lua request'dap'.repl.open()<cr>", "Open REPL" },
+      s = { ":lua show_dap_centered_scopes()<cr>", "Show debug scopes" }
+    },
 
 
-	  e = {
-		  name = "Edit",
-		  o = { "o<Esc><cr>", "Add blank line" },
-		  O = { "O<Esc><cr>", "Add blank line up" },
-	  },
+    e = {
+      name = "Edit",
+      o = { "o<Esc><cr>", "Add blank line" },
+      O = { "O<Esc><cr>", "Add blank line up" },
+    },
 
-	  g = {
-		  name = "Go to ",
-		  d = { ":lua vim.lsp.buf.definition()<cr>", "Go to definition"},
-		  D = { ":lua vim.lsp.buf.declaration()<cr>" ,"Go to declaration"},
-		  i = { ":lua vim.lsp.buf.implementation()<cr>", "Go to implementation"},
-		  s = { ":lua require('telescope.builtin').lsp_document_symbols()<cr>", "Go to document symbol"},
-		  w = { ":lua require('telescope.builtin').lsp_dynamic_workspace_symbols()<cr>", "Go to workspace symbol"},
-		  r = { ":lua require('telescope.builtin').lsp_references()<cr>", "Find references"},
-		  t = { ":lua vim.lsp.buf.type_definition()<cr>", "Go to type definition"},
-          },
 
-	  s = {
-		  name = "Search",
-                  d = { "Diagnostics" },
-		  f = { "Files by name" },
-		  F = { ":lua require('telescope.builtin').find_files({ cwd = '~', hidden = true})<cr>", "Files in home by name" },
-		  g = { "<cmd>Telescope live_grep<cr>", "Files by grep" },
-                  h = { "Help" },
-	  },
+    s = {
+      name = "Search",
+      d = { "Diagnostics" },
+      f = { "Files by name" },
+      F = { ":lua require('telescope.builtin').find_files({ cwd = '~', hidden = true})<cr>", "Files in home by name" },
+      g = { "<cmd>Telescope live_grep<cr>", "Files by grep" },
+      h = { "Help" },
+    },
 
-	  u = {
-		  name = "Utilities",
-		  d = { "<cmd>CD<cr>", "Show diff" },
-		  D = { "<cmd>TCV<cr>", "Enable/disable diff" },
-		  t = { "<cmd>FloatermNew<cr>", "New terminal" },
-		  u = { "<cmd>FloatermToggle<cr>", "Terminal toggle" },
-		  y = { "<cmd>FloatermNext<cr>", "Next terminal" },
-	  },
+    u = {
+      name = "Utilities",
+      d = { "<cmd>CD<cr>", "Show diff" },
+      D = { "<cmd>TCV<cr>", "Enable/disable diff" },
+      t = { "<cmd>FloatermNew<cr>", "New terminal" },
+      u = { "<cmd>FloatermToggle<cr>", "Terminal toggle" },
+      y = { "<cmd>FloatermNext<cr>", "Next terminal" },
+    },
 
-	  r = {
-		  name = "Refactor / Run",
-		  r = { "Rename" },
-                  t = {
-                    name = "Test",
-                    m = { ":lua run_java_test_method()<cr>", "Test method" },
-                    c = { ":lua run_java_test_class()<cr>", "Test class" }
-                  },
-	  },
-
-          t = {
-                  name = "Explorer",
-                  t = { "<cmd>NvimTreeFocus<cr>", "Open explorer" },
-                  f = { "<cmd>NvimTreeFindFile<cr>", "Open explorer in current file" }
-          }
+    r = {
+      name = "Refactor / Run",
+      r = { "Rename" },
+      t = {
+        name = "Test",
+        m = { ":lua run_java_test_method()<cr>", "Test method" },
+        c = { ":lua run_java_test_class()<cr>", "Test class" }
+      },
+    },
+    t = {
+      name = "Explorer / Tabs",
+      o = { "<cmd>tabnew<cr>", "Open new tab" },
+      x = { "<cmd>tabclose<cr>", "Close tab" },
+      n = { "<cmd>tabn<cr>", "Next tab" },
+      p = { "<cmd>tabp<cr>", "Previous tab" },
+      t = { "<cmd>NvimTreeFocus<cr>", "Open explorer" },
+      f = { "<cmd>NvimTreeFindFile<cr>", "Open explorer in current file" }
+    }
   }
 
 
   local mappingsTerminal = {
 
-	  u = {
-		  nam = "tilities",
-		  t = { "<cmd>FloatermNew<cr>", "New terminal" },
-		  u = { "<cmd>FloatermToggle<cr>", "Terminal toggle" },
-		  y = { "<cmd>FloatermNext<cr>", "Next terminal" },
-	  },
+    u = {
+      nam = "tilities",
+      t = { "<cmd>FloatermNew<cr>", "New terminal" },
+      u = { "<cmd>FloatermToggle<cr>", "Terminal toggle" },
+      y = { "<cmd>FloatermNext<cr>", "Next terminal" },
+    },
 
   }
 
@@ -792,7 +826,14 @@ function M.setup()
       name = "Comment",
       c = "Comment line",
       b = "Comment block",
-    }
+    },
+    d = { ":lua vim.lsp.buf.definition()<cr>", "Go to definition" },
+    D = { ":lua vim.lsp.buf.declaration()<cr>", "Go to declaration" },
+    i = { ":lua vim.lsp.buf.implementation()<cr>", "Go to implementation" },
+    r = { ":lua require('telescope.builtin').lsp_references()<cr>", "Find references" },
+    s = { ":lua require('telescope.builtin').lsp_document_symbols()<cr>", "Go to document symbol" },
+    t = { ":lua vim.lsp.buf.type_definition()<cr>", "Go to type definition" },
+    w = { ":lua require('telescope.builtin').lsp_dynamic_workspace_symbols()<cr>", "Go to workspace symbol" },
   }
   topLevelMappings["<F6>"] = { ":lua require'dap'.step_over()<cr>", "Debug - step over" }
   topLevelMappings["<F7>"] = { ":lua require'dap'.step_into()<cr>", "Debug - Step into" }
@@ -809,4 +850,3 @@ function M.setup()
 end
 
 M.setup()
-
