@@ -254,6 +254,11 @@ _G.packer_plugins = {
     path = "/Users/plagreca/.local/share/nvim/site/pack/packer/start/vim-sleuth",
     url = "https://github.com/tpope/vim-sleuth"
   },
+  ["vim-surround"] = {
+    loaded = true,
+    path = "/Users/plagreca/.local/share/nvim/site/pack/packer/start/vim-surround",
+    url = "https://github.com/tpope/vim-surround"
+  },
   ["which-key.nvim"] = {
     config = { "\27LJ\2\nF\0\0\2\0\4\0\t6\0\0\0009\0\1\0+\1\2\0=\1\2\0006\0\0\0009\0\1\0)\1,\1=\1\3\0K\0\1\0\15timeoutlen\ftimeout\bopt\bvim\0" },
     loaded = true,

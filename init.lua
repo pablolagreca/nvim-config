@@ -115,6 +115,9 @@ require('packer').startup(function(use)
   --         require('lspsaga').setup({})
   --     end,
   -- })
+
+  use 'tpope/vim-surround'
+
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
   if has_plugins then
@@ -238,6 +241,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 require('lualine').setup {
   options = {
     icons_enabled = false,
+    theme = 'onedark',
     component_separators = '|',
     section_separators = '',
   },
