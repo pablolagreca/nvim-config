@@ -117,6 +117,7 @@ require('packer').startup(function(use)
   -- })
 
   use 'tpope/vim-surround'
+  use 'windwp/nvim-autopairs'
 
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
@@ -187,7 +188,6 @@ vim.opt.mouse = 'a'
 -- Enable break indent
 vim.opt.breakindent = true
 
-
 -- Save undo history
 vim.opt.undofile = true
 
@@ -201,7 +201,6 @@ vim.wo.signcolumn = 'yes'
 
 -- Set colorscheme
 vim.opt.termguicolors = true
--- vim.cmd [[colorscheme onedark]]
 vim.cmd [[colorscheme nightfly]]
 
 -- Set completeopt to have a better completion experience
@@ -517,11 +516,68 @@ cmp.setup {
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
+-- change color for arrows in tree to light blue
+vim.cmd([[ highlight NvimTreeIndentMarker guifg=#3FC5FF ]])
+
 -- set termguicolors to enable highlight groups
 vim.opt.termguicolors = true
 
 require("nvim-tree").setup({
+  renderer = {
+    icons = {
+      glyphs = {
+        folder = {
+          arrow_closed = "",
+          arrow_open = "",
+        }
+      }
+    }
+  },
+  -- disable window_picker for
+  -- explorer to work well with
+  -- window splits
+  actions = {
+    open_file = {
+      window_picker = {
+        enable = false,
+      },
+    },
+  },
 })
+
+-- Autopairs configuration
+-- import nvim-autopairs safely
+local autopairs_setup, autopairs = pcall(require, "nvim-autopairs")
+if not autopairs_setup then
+  return
+end
+
+-- configure autopairs
+autopairs.setup({
+  check_ts = true, -- enable treesitter
+  ts_config = {
+    lua = { "string" }, -- don't add pairs in lua string treesitter nodes
+    javascript = { "template_string" }, -- don't add pairs in javscript template_string treesitter nodes
+    java = false, -- don't check treesitter on java
+  },
+})
+
+-- import nvim-autopairs completion functionality safely
+local cmp_autopairs_setup, cmp_autopairs = pcall(require, "nvim-autopairs.completion.cmp")
+if not cmp_autopairs_setup then
+  return
+end
+
+-- import nvim-cmp plugin safely (completions plugin)
+local cmp_setup, cmp = pcall(require, "cmp")
+if not cmp_setup then
+  return
+end
+
+-- make autopairs and completion work together
+cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
+
+
 
 local dap, dapui = require("dap"), require("dapui")
 dapui.setup({
