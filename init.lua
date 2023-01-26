@@ -102,6 +102,7 @@ require('packer').startup(function(use)
   use 'iamcco/markdown-preview.nvim'
   -- ndap client
   use 'mfussenegger/nvim-dap'
+  use 'theHamsta/nvim-dap-virtual-text'
   use { "rcarriga/nvim-dap-ui", requires = { "mfussenegger/nvim-dap" } }
   -- Java jdtls plugin
   use 'mfussenegger/nvim-jdtls'
@@ -114,6 +115,10 @@ require('packer').startup(function(use)
 
   use 'tpope/vim-surround'
   use 'windwp/nvim-autopairs'
+  use {
+    'phaazon/hop.nvim',
+    branch = 'v2',
+  } 
 
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
@@ -246,6 +251,10 @@ require('lualine').setup {
 
 -- Enable Comment.nvim
 require('Comment').setup()
+
+require('hop').setup({
+  case_insensitive = false
+})
 
 -- Enable `lukas-reineke/indent-blankline.nvim`
 -- See `:help indent_blankline.txt`
@@ -676,17 +685,10 @@ function show_dap_centered_scopes()
 end
 
 function attach_to_debug()
-  -- dap.configurations.java = {
-  --   {
-  --     type= 'executable';
-  --     request = 'attach';
-  --     name = "Attach to the process";
-  --     hostName = "localhost";
-  --     port = "5005";
-  --   },
-  -- }
   dap.continue()
 end
+
+require('nvim-dap-virtual-text').setup()
 
 -- run debug
 function get_test_runner(test_name, debug)
@@ -735,6 +737,7 @@ end
 --
 
 local M = {}
+local hop = require('hop')
 
 function M.setup()
   local whichkey = require "which-key"
@@ -819,6 +822,12 @@ function M.setup()
       O = { "O<Esc><cr>", "Add blank line up" },
     },
 
+    j = {
+      name = "Jump",
+      c = { "<cmd>HopChar1<cr>", "Jump to char"},
+      j = { "<cmd>HopChar2<cr>", "Jump to char2"},
+      l = { "<cmd>HopLine<cr>", "Jump to line"},
+    },
 
     s = {
       name = "Search",
