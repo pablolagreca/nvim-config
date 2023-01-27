@@ -118,7 +118,10 @@ require('packer').startup(function(use)
   use {
     'phaazon/hop.nvim',
     branch = 'v2',
-  } 
+  }
+
+  -- Golang configuration
+  use 'fatih/vim-go'
 
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
@@ -791,8 +794,8 @@ function M.setup()
       o = { ":lua require'jdtls'.organize_imports()<CR>", "Organize imports" },
       r = {
         name = "Rename",
-        r = { "<cmd>Lspsaga rename<CR>", "Rename symbol"},
-        w = { "<cmd>Lspsaga rename ++project<CR>", "Rename word"},
+        r = { "<cmd>Lspsaga rename<CR>", "Rename symbol" },
+        w = { "<cmd>Lspsaga rename ++project<CR>", "Rename word" },
       },
       v = { ":lua require('jdtls').extract_variable()<CR>", "Extract variable" },
     },
@@ -814,19 +817,26 @@ function M.setup()
       r = { ":lua request'dap'.repl.open()<cr>", "Open REPL" },
       s = { ":lua show_dap_centered_scopes()<cr>", "Show debug scopes" }
     },
-
-
+    
     e = {
       name = "Edit",
       o = { "o<Esc><cr>", "Add blank line" },
       O = { "O<Esc><cr>", "Add blank line up" },
     },
 
+    g = {
+      name = "Git",
+      d = { "<cmd>Gitsigns diffthis<cr>", "Diff file" },
+      n = { "<cmd>Gitsigns next_hunk<cr>", "Next change" },
+      p = { "<cmd>Gitsigns prev_hunk<cr>", "Previous change"},
+      r = { "<cmd>Gitsigns reset_hunk<cr>", "Reset change"},
+    },
+
     j = {
       name = "Jump",
-      c = { "<cmd>HopChar1<cr>", "Jump to char"},
-      j = { "<cmd>HopChar2<cr>", "Jump to char2"},
-      l = { "<cmd>HopLine<cr>", "Jump to line"},
+      c = { "<cmd>HopChar1<cr>", "Jump to char" },
+      j = { "<cmd>HopChar2<cr>", "Jump to char2" },
+      l = { "<cmd>HopLine<cr>", "Jump to line" },
     },
 
     s = {
@@ -894,7 +904,7 @@ function M.setup()
     D = { "<cmd>Lspsaga goto_definition<CR>", "Go to declaration" },
     e = { "<cmd>Lspsaga show_line_diagnostics<CR>", "Show line diagnostics" },
     f = { "<cmd>Lspsaga lsp_finder<CR>", "Find symbol" },
-    h = { "<cmd>Lspsaga hover_doc<CR>", "Hover docs"},
+    h = { "<cmd>Lspsaga hover_doc<CR>", "Hover docs" },
     i = { ":lua vim.lsp.buf.implementation()<cr>", "Go to implementation" },
     k = { "<cmd>Lspsaga hover_doc ++keep<CR>", "Hover docs - keep window" },
     o = { "<cmd>Lspsaga outline<CR>", "Toggle outline" },
@@ -913,6 +923,30 @@ function M.setup()
   vim.keymap.set("n", "<F11>", function() run_spring_boot(true) end)
   topLevelMappings["<F10>"] = { "Run application" }
   topLevelMappings["<F11>"] = { "Debug application" }
+
+  vim.g.maplocalleader = ','
+  local wkl = require('which-key')
+
+  -- Logic to change mappings based on the file type.
+  -- vim.cmd('autocmd FileType * lua setKeybinds()')
+  -- function setKeybinds()
+  --   local fileTy = vim.api.nvim_buf_get_option(0, "filetype")
+  --   local opts = { prefix = '<localleader>', buffer = 0 }
+  --
+  --   if (fileTy == 'java') then
+  --     
+  --   elseif fileTy == 'python' then
+  --     wkl.register({
+  --       ['w'] = { ':w<CR>', 'test write' },
+  --       ['q'] = { ':q<CR>', 'test quit' },
+  --     }, opts)
+  --   elseif fileTy == 'sh' then
+  --     wkl.register({
+  --       ['W'] = { ':w<CR>', 'test write' },
+  --       ['Q'] = { ':q<CR>', 'test quit' },
+  --     }, opts)
+  --   end
+  -- end
 
   whichkey.setup(conf)
   whichkey.register(mappings, opts)
