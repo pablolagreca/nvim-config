@@ -49,8 +49,11 @@ require('packer').startup(function(use)
   use { -- Autocompletion
     'hrsh7th/nvim-cmp',
     requires = { 'hrsh7th/cmp-nvim-lsp', 'L3MON4D3/LuaSnip', 'saadparwaiz1/cmp_luasnip',
-      'hrsh7th/cmp-buffer', 'hrsh7th/cmp-path', 'rcarriga/cmp-dap' },
+      'hrsh7th/cmp-buffer', 'hrsh7th/cmp-path', 'rcarriga/cmp-dap', 'hrsh7th/cmp-vsnip', 'hrsh7th/vim-vsnip' },
   }
+
+  -- icons in Autocompletion
+  use 'onsails/lspkind.nvim'
 
   use { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
@@ -131,6 +134,8 @@ require('packer').startup(function(use)
   use 'https://gitlab.com/yorickpeterse/nvim-window'
   -- Persist breakpoints after restart nvim
   use { 'Weissle/persistent-breakpoints.nvim' }
+  -- Snippets support 
+  use({"L3MON4D3/LuaSnip", tag = "v1.2.1"})
 
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
@@ -506,6 +511,17 @@ cmp.setup {
     { name = 'luasnip' },
     { name = 'path' },
     { name = 'buffer' },
+    { name = 'vsnip' },
+  },
+  formatting = {
+    format = require'lspkind'.cmp_format({
+      mode = 'symbol_text',
+      max_width = 50,
+      ellipsis_char = '...',
+      before = function (_, vim_item) 
+        return vim_item
+      end
+    })
   },
   enabled = function() -- for cmp-dap
     return vim.api.nvim_buf_get_option(0, "buftype") ~= "prompt"
@@ -552,6 +568,10 @@ require("nvim-tree").setup({
       },
     },
   },
+  sort_by = "case_sensitive",
+  view = {
+    adaptive_size = true,
+  }
 })
 
 -- Autopairs configuration
@@ -733,12 +753,14 @@ end
 function run_java_test_method(debug)
   local utils = require 'utils'
   local method_name = utils.get_current_full_method_name("\\#")
+  vim.cmd('tab new "test " .. method_name')
   vim.cmd('term ' .. get_test_runner(method_name, debug))
 end
 
 function run_java_test_class(debug)
   local utils = require 'utils'
   local class_name = utils.get_current_full_class_name()
+  vim.cmd('tab new "test " .. class_name')
   vim.cmd('term ' .. get_test_runner(class_name, debug))
 end
 
@@ -757,6 +779,7 @@ function get_spring_boot_runner(profile, debug)
 end
 
 function run_spring_boot(debug)
+  vim.cmd('tab new "running app"')
   vim.cmd('term ' .. get_spring_boot_runner(method_name, debug))
 end
 
@@ -944,8 +967,8 @@ function M.setup()
     S = { ":lua require('telescope.builtin').lsp_document_symbols()<cr>", "Go to document symbol" },
     t = { ":lua vim.lsp.buf.type_definition()<cr>", "Go to type definition" },
     w = { ":lua require('telescope.builtin').lsp_dynamic_workspace_symbols()<cr>", "Go to workspace symbol" },
-    ["["] = { "Lspsaga diagnostic_jump_prev", "Show previous diagnostics" },
-    ["]"] = { "Lspsaga diagnostic_jump_next", "Show next diagnostics" },
+    ["["] = { "<cmd>Lspsaga diagnostic_jump_prev<cr>", "Show previous diagnostics" },
+    ["]"] = { "<cmd>Lspsaga diagnostic_jump_next<cr>", "Show next diagnostics" },
   }
   topLevelMappings["<F5>"] = { ":lua require'dap'.continue()<cr>", "Debug - Continue " }
   topLevelMappings["<F6>"] = { ":lua require'dap'.step_over()<cr>", "Debug - Step over" }
