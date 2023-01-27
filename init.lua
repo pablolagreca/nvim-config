@@ -6,6 +6,10 @@ if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
 
 end
 
+
+-- TODO add telescope dap
+-- https://github.com/nvim-telescope/telescope-dap.nvim
+
 -- Autocommand that reloads neovim whenever you save this file
 vim.cmd([[
   augroup packer_user_config
@@ -24,7 +28,8 @@ require('packer').startup(function(use)
   -- Package manager
   use 'wbthomason/packer.nvim'
 
-  use 'bluz71/vim-nightfly-guicolors'
+  -- use 'bluz71/vim-nightfly-guicolors'
+  use 'shaunsingh/nord.nvim'
 
   use { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
@@ -44,7 +49,7 @@ require('packer').startup(function(use)
   use { -- Autocompletion
     'hrsh7th/nvim-cmp',
     requires = { 'hrsh7th/cmp-nvim-lsp', 'L3MON4D3/LuaSnip', 'saadparwaiz1/cmp_luasnip',
-      'hrsh7th/cmp-buffer', 'hrsh7th/cmp-path' },
+      'hrsh7th/cmp-buffer', 'hrsh7th/cmp-path', 'rcarriga/cmp-dap' },
   }
 
   use { -- Highlight, edit, and navigate code
@@ -122,6 +127,10 @@ require('packer').startup(function(use)
 
   -- Golang configuration
   use 'fatih/vim-go'
+  -- Pick windows plugin
+  use 'https://gitlab.com/yorickpeterse/nvim-window'
+  -- Persist breakpoints after restart nvim
+  use { 'Weissle/persistent-breakpoints.nvim' }
 
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
@@ -203,9 +212,10 @@ vim.opt.smartcase = true
 vim.opt.updatetime = 250
 vim.wo.signcolumn = 'yes'
 
+require('nord').set()
 -- Set colorscheme
 vim.opt.termguicolors = true
-vim.cmd [[colorscheme nightfly]]
+-- vim.cmd [[colorscheme nord]]
 
 -- Set completeopt to have a better completion experience
 vim.opt.completeopt = 'menuone,noselect'
@@ -228,6 +238,7 @@ vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = tr
 -- Move to normal mode more easy
 vim.keymap.set('i', 'jk', '<ESC>')
 
+
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
 local highlight_group = vim.api.nvim_create_augroup('YankHighlight', { clear = true })
@@ -244,6 +255,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 require('lualine').setup {
   options = {
     icons_enabled = false,
+    theme = nord,
     component_separators = '|',
     section_separators = '',
   },
@@ -495,7 +507,18 @@ cmp.setup {
     { name = 'path' },
     { name = 'buffer' },
   },
+  enabled = function() -- for cmp-dap
+    return vim.api.nvim_buf_get_option(0, "buftype") ~= "prompt"
+        or require("cmp_dap").is_dap_buffer()
+  end
 }
+
+--for cmp-dap
+require("cmp").setup.filetype({ "dap-repl", "dapui_watches", "dapui_hover" }, {
+  sources = {
+    { name = "dap" },
+  },
+})
 
 -- Nvim-tree configuration
 -- disable netrw at the very start of your init.lua (strongly advised)
@@ -581,6 +604,12 @@ end
 cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
 
 
+vim.fn.sign_define('DapBreakpoint', { text = '🟥', texthl = '', linehl = '', numhl = '' })
+vim.fn.sign_define('DapStopped', { text = '▶️', texthl = '', linehl = '', numhl = '' })
+
+require('persistent-breakpoints').setup{
+	load_breakpoints_event = { "BufReadPost" }
+}
 
 local dap, dapui = require("dap"), require("dapui")
 dapui.setup({
@@ -772,7 +801,7 @@ function M.setup()
 
   local mappings = {
     --["l"] = { "<cmd>:source .session.vim<cr>" },
-    ["w"] = { "<cmd>update!<CR>", "Save" },
+    ["W"] = { "<cmd>update!<CR>", "Save" },
     -- ["q"] = { "<cmd>q!<CR>", "Quit" },
     ["?"] = { "Find recently open files" },
     ["<space>"] = { "Find existing buffers" },
@@ -811,8 +840,9 @@ function M.setup()
       y = { ":lua require'jdtls'.test_nearest_method()<cr>", "Test nearest method" },
       o = { ":lua require('dapui').open()<cr>", "Open debugger UI" },
       c = { ":lua require('dapui').close()<cr>", "Close debugger UI" },
-      b = { ":lua require'dap'.toggle_breakpoint()<cr>", "Toogle breakpoin" },
-      B = { ":lua require'dap'.toggle_breakpoint(vim.fn.input('Condition: '))<cr>", "Toogle conditional endpoint" },
+      C = { ":lua require('persistent-breakpoints.api').clear_all_breakpoints()<cr>", "Clear all breakpoints"},
+      b = { ":lua require'dap'.toggle_breakpoint()<cr>", "Toogle breakpoint" },
+      B = { ":lua require('persistent-breakpoints.api').set_conditional_breakpoint()<cr>", "Toogle conditional endpoint" },
       l = { ":lua require'dap'.toggle_breakpoint(nil, nil, vim.fn.input('Log: '))<cr>", "Toogle log breakpoint" },
       r = { ":lua request'dap'.repl.open()<cr>", "Open REPL" },
       s = { ":lua show_dap_centered_scopes()<cr>", "Show debug scopes" }
@@ -873,7 +903,8 @@ function M.setup()
       p = { "<cmd>tabp<cr>", "Previous tab" },
       t = { "<cmd>NvimTreeFocus<cr>", "Open explorer" },
       f = { "<cmd>NvimTreeFindFile<cr>", "Open explorer in current file" }
-    }
+    },
+    w = { ":lua require('nvim-window').pick()<cr>", "Window pick" },
   }
 
 
@@ -916,9 +947,10 @@ function M.setup()
     ["["] = { "Lspsaga diagnostic_jump_prev", "Show previous diagnostics" },
     ["]"] = { "Lspsaga diagnostic_jump_next", "Show next diagnostics" },
   }
-  topLevelMappings["<F6>"] = { ":lua require'dap'.step_over()<cr>", "Debug - step over" }
-  topLevelMappings["<F7>"] = { ":lua require'dap'.step_into()<cr>", "Debug - Step into" }
   topLevelMappings["<F5>"] = { ":lua require'dap'.continue()<cr>", "Debug - Continue " }
+  topLevelMappings["<F6>"] = { ":lua require'dap'.step_over()<cr>", "Debug - Step over" }
+  topLevelMappings["<F7>"] = { ":lua require'dap'.step_into()<cr>", "Debug - Step into" }
+  topLevelMappings["<F8>"] = { ":lua require'dap'.step_out()<cr>", "Debug - Step out" }
   vim.keymap.set("n", "<F10>", function() run_spring_boot() end)
   vim.keymap.set("n", "<F11>", function() run_spring_boot(true) end)
   topLevelMappings["<F10>"] = { "Run application" }
