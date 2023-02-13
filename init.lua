@@ -134,8 +134,8 @@ require('packer').startup(function(use)
   use 'https://gitlab.com/yorickpeterse/nvim-window'
   -- Persist breakpoints after restart nvim
   use { 'Weissle/persistent-breakpoints.nvim' }
-  -- Snippets support 
-  use({"L3MON4D3/LuaSnip", tag = "v1.2.1"})
+  -- Snippets support
+  use({ "L3MON4D3/LuaSnip", tag = "v1.2.1" })
 
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
@@ -507,11 +507,11 @@ cmp.setup {
     { name = 'vsnip' },
   },
   formatting = {
-    format = require'lspkind'.cmp_format({
+    format = require 'lspkind'.cmp_format({
       mode = 'symbol_text',
       max_width = 50,
       ellipsis_char = '...',
-      before = function (_, vim_item) 
+      before = function(_, vim_item)
         return vim_item
       end
     })
@@ -538,7 +538,8 @@ vim.g.loaded_netrwPlugin = 1
 vim.cmd([[ highlight NvimTreeIndentMarker guifg=#3FC5FF ]])
 
 -- set termguicolors to enable highlight groups
-vim.opt.termguicolors = true
+local HEIGHT_RATIO = 0.8 -- You can change this
+local WIDTH_RATIO = 0.5  -- You can change this tooim.opt.termguicolors = true
 
 require("nvim-tree").setup({
   renderer = {
@@ -564,6 +565,29 @@ require("nvim-tree").setup({
   sort_by = "case_sensitive",
   view = {
     adaptive_size = true,
+    float = {
+      enable = true,
+      quit_on_focus_loss = true,
+      open_win_config = function()
+        local screen_w = vim.opt.columns:get()
+        local screen_h = vim.opt.lines:get() - vim.opt.cmdheight:get()
+        local window_w = screen_w * WIDTH_RATIO
+        local window_h = screen_h * HEIGHT_RATIO
+        local window_w_int = math.floor(window_w)
+        local window_h_int = math.floor(window_h)
+        local center_x = (screen_w - window_w) / 2
+        local center_y = ((vim.opt.lines:get() - window_h) / 2)
+            - vim.opt.cmdheight:get()
+        return {
+          border = "rounded",
+          relative = "editor",
+          row = center_y,
+          col = center_x,
+          width = window_w_int,
+          height = window_h_int,
+        }
+      end,
+    }
   }
 })
 
@@ -620,8 +644,8 @@ cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
 vim.fn.sign_define('DapBreakpoint', { text = '🟥', texthl = '', linehl = '', numhl = '' })
 vim.fn.sign_define('DapStopped', { text = '▶️', texthl = '', linehl = '', numhl = '' })
 
-require('persistent-breakpoints').setup{
-	load_breakpoints_event = { "BufReadPost" }
+require('persistent-breakpoints').setup {
+  load_breakpoints_event = { "BufReadPost" }
 }
 
 local dap, dapui = require("dap"), require("dapui")
@@ -852,14 +876,14 @@ function M.setup()
       y = { ":lua require'jdtls'.test_nearest_method()<cr>", "Test nearest method" },
       o = { ":lua require('dapui').open()<cr>", "Open debugger UI" },
       c = { ":lua require('dapui').close()<cr>", "Close debugger UI" },
-      C = { ":lua require('persistent-breakpoints.api').clear_all_breakpoints()<cr>", "Clear all breakpoints"},
+      C = { ":lua require('persistent-breakpoints.api').clear_all_breakpoints()<cr>", "Clear all breakpoints" },
       b = { ":lua require'dap'.toggle_breakpoint()<cr>", "Toogle breakpoint" },
       B = { ":lua require('persistent-breakpoints.api').set_conditional_breakpoint()<cr>", "Toogle conditional endpoint" },
       l = { ":lua require'dap'.toggle_breakpoint(nil, nil, vim.fn.input('Log: '))<cr>", "Toogle log breakpoint" },
       r = { ":lua request'dap'.repl.open()<cr>", "Open REPL" },
       s = { ":lua show_dap_centered_scopes()<cr>", "Show debug scopes" }
     },
-    
+
     e = {
       name = "Edit",
       o = { "o<Esc><cr>", "Add blank line" },
@@ -870,8 +894,8 @@ function M.setup()
       name = "Git",
       d = { "<cmd>Gitsigns diffthis<cr>", "Diff file" },
       n = { "<cmd>Gitsigns next_hunk<cr>", "Next change" },
-      p = { "<cmd>Gitsigns prev_hunk<cr>", "Previous change"},
-      r = { "<cmd>Gitsigns reset_hunk<cr>", "Reset change"},
+      p = { "<cmd>Gitsigns prev_hunk<cr>", "Previous change" },
+      r = { "<cmd>Gitsigns reset_hunk<cr>", "Reset change" },
     },
 
     j = {
@@ -913,7 +937,7 @@ function M.setup()
       x = { "<cmd>tabclose<cr>", "Close tab" },
       n = { "<cmd>tabn<cr>", "Next tab" },
       p = { "<cmd>tabp<cr>", "Previous tab" },
-      t = { "<cmd>NvimTreeFocus<cr>", "Open explorer" },
+      t = { "<cmd>NvimTreeToggle<cr>", "Open explorer" },
       f = { "<cmd>NvimTreeFindFile<cr>", "Open explorer in current file" }
     },
     w = { ":lua require('nvim-window').pick()<cr>", "Window pick" },
