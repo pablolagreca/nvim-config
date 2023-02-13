@@ -430,13 +430,6 @@ local servers = {
   -- pyright = {},
   -- rust_analyzer = {},
   -- tsserver = {},
-
-  sumneko_lua = {
-    Lua = {
-      workspace = { checkThirdParty = false },
-      telemetry = { enable = false },
-    },
-  },
 }
 
 -- Setup neovim lua configuration
@@ -840,16 +833,12 @@ function M.setup()
     c = {
       name = "Code",
       a = { "<cmd>Lspsaga code_action<CR>", "Code action" },
-      c = { ":lua require('jdtls').extract_constant()<CR>", "Extract constant" },
       f = { ":lua vim.lsp.buf.formatting()<cr>", "Format code" },
-      m = { ":lua require('jdtls').extract_method(true)<cr>", "Extract method" },
-      o = { ":lua require'jdtls'.organize_imports()<CR>", "Organize imports" },
       r = {
         name = "Rename",
         r = { "<cmd>Lspsaga rename<CR>", "Rename symbol" },
         w = { "<cmd>Lspsaga rename ++project<CR>", "Rename word" },
-      },
-      v = { ":lua require('jdtls').extract_variable()<CR>", "Extract variable" },
+      }
     },
 
     d = {
@@ -931,6 +920,7 @@ function M.setup()
   }
 
 
+
   local mappingsTerminal = {
 
     u = {
@@ -989,7 +979,7 @@ function M.setup()
   --   local opts = { prefix = '<localleader>', buffer = 0 }
   --
   --   if (fileTy == 'java') then
-  --     
+  --
   --   elseif fileTy == 'python' then
   --     wkl.register({
   --       ['w'] = { ':w<CR>', 'test write' },
@@ -1007,6 +997,14 @@ function M.setup()
   whichkey.register(mappings, opts)
   whichkey.register(mappingsTerminal, optsTerminal)
   whichkey.register(topLevelMappings)
+  vim.cmd('autocmd FileType java lua JavaMappings()')
+  function JavaMapings()
+    mappings.c.c = { ":lua require('jdtls').extract_constant()<CR>", "Extract constant" }
+    mappings.c.m = { ":lua require('jdtls').extract_method(true)<cr>", "Extract method" }
+    mappings.c.o = { ":lua require'jdtls'.organize_imports()<CR>", "Organize imports" }
+    mappings.c.v = { ":lua require('jdtls').extract_variable()<CR>", "Extract variable" }
+    whichkey.register(mappings, opts)
+  end
 end
 
 M.setup()
