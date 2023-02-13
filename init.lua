@@ -997,8 +997,8 @@ function M.setup()
   whichkey.register(mappings, opts)
   whichkey.register(mappingsTerminal, optsTerminal)
   whichkey.register(topLevelMappings)
-  vim.cmd('autocmd FileType java lua JavaMappings()')
-  function JavaMapings()
+  -- vim.cmd('autocmd FileType java lua JavaMappings()')
+  function JavaMappings()
     mappings.c.c = { ":lua require('jdtls').extract_constant()<CR>", "Extract constant" }
     mappings.c.m = { ":lua require('jdtls').extract_method(true)<cr>", "Extract method" }
     mappings.c.o = { ":lua require'jdtls'.organize_imports()<CR>", "Organize imports" }
