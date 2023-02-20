@@ -124,13 +124,13 @@ require('packer').startup(function(use)
   use({
     "glepnir/lspsaga.nvim",
     branch = "main",
-config = function()
-        require("lspsaga").setup({})
+    config = function()
+      require("lspsaga").setup({})
     end,
     requires = {
-        {"nvim-tree/nvim-web-devicons"},
-        --Please make sure you install markdown and markdown_inline parser
-        {"nvim-treesitter/nvim-treesitter"}
+      { "nvim-tree/nvim-web-devicons" },
+      --Please make sure you install markdown and markdown_inline parser
+      { "nvim-treesitter/nvim-treesitter" }
     }
   })
 
@@ -140,7 +140,14 @@ config = function()
     'phaazon/hop.nvim',
     branch = 'v2',
   }
-
+  use({ "goolord/alpha-nvim",
+    dependencies = {
+      "kyazdani42/nvim-web-devicons",
+    },
+    config = function()
+      require("core.plugins.alpha.alpha")
+    end,
+  })
   -- Pick windows plugin
   use 'https://gitlab.com/yorickpeterse/nvim-window'
   -- Persist breakpoints after restart nvim
@@ -352,7 +359,8 @@ vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { de
 -- See `:help nvim-treesitter`
 require('nvim-treesitter.configs').setup {
   -- Add languages to be installed here that you want installed for treesitter
-  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'markdown', 'markdown_inline', 'python', 'rust', 'typescript', 'help', 'vim', 'java', 'json', 'http' },
+  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'markdown', 'markdown_inline', 'python', 'rust', 'typescript', 'help',
+    'vim', 'java', 'json', 'http' },
 
   highlight = { enable = true },
   indent = { enable = true, disable = { 'python' } },
@@ -497,7 +505,7 @@ cmp.setup {
     end,
   },
   mapping = cmp.mapping.preset.insert {
-    ['<C-d>'] = cmp.mapping.scroll_docs( -4),
+    ['<C-d>'] = cmp.mapping.scroll_docs(-4),
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<CR>'] = cmp.mapping.confirm {
@@ -516,8 +524,8 @@ cmp.setup {
     ['<S-Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_prev_item()
-      elseif luasnip.jumpable( -1) then
-        luasnip.jump( -1)
+      elseif luasnip.jumpable(-1) then
+        luasnip.jump(-1)
       else
         fallback()
       end
