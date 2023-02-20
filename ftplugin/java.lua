@@ -51,7 +51,79 @@ local config = {
   -- for a list of options
   settings = {
     java = {
-    }
+      home = '/Users/ivanermolaev/Library/Java/JavaVirtualMachines/temurin-18.0.1/Contents/Home/',
+      eclipse = {
+        downloadSources = true,
+      },
+      configuration = {
+        updateBuildConfiguration = "interactive",
+        runtimes = {
+          {
+            name = "JavaSE-18",
+            path = "/Users/ivanermolaev/Library/Java/JavaVirtualMachines/temurin-18.0.1/Contents/Home",
+          },
+          {
+            name = "JavaSE-17",
+            path = "/Users/ivanermolaev/Library/Java/JavaVirtualMachines/temurin-17.0.4/Contents/Home",
+          }
+        }
+      },
+      maven = {
+        downloadSources = true,
+      },
+      implementationsCodeLens = {
+        enabled = true,
+      },
+      referencesCodeLens = {
+        enabled = true,
+      },
+      references = {
+        includeDecompiledSources = true,
+      },
+      format = {
+        enabled = true,
+        settings = {
+          url = vim.fn.stdpath "config" .. "/lang-servers/intellij-java-google-style.xml",
+          profile = "GoogleStyle",
+        },
+      },
+
+    },
+    signatureHelp = { enabled = true },
+    completion = {
+      favoriteStaticMembers = {
+        "org.hamcrest.MatcherAssert.assertThat",
+        "org.hamcrest.Matchers.*",
+        "org.hamcrest.CoreMatchers.*",
+        "org.junit.jupiter.api.Assertions.*",
+        "java.util.Objects.requireNonNull",
+        "java.util.Objects.requireNonNullElse",
+        "org.mockito.Mockito.*",
+      },
+      importOrder = {
+        "java",
+        "javax",
+        "com",
+        "org"
+      },
+    },
+    extendedClientCapabilities = extendedClientCapabilities,
+    sources = {
+      organizeImports = {
+        starThreshold = 9999,
+        staticStarThreshold = 9999,
+      },
+    },
+    codeGeneration = {
+      toString = {
+        template = "${object.className}{${member.name()}=${member.value}, ${otherMembers}}",
+      },
+      useBlocks = true,
+    },
+  },
+
+  flags = {
+    allow_incremental_sync = true,
   },
 
   -- Language server `initializationOptions`
