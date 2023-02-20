@@ -151,6 +151,7 @@ _G.packer_plugins = {
     url = "https://github.com/ray-x/guihua.lua"
   },
   ["hop.nvim"] = {
+    config = { "\27LJ\2\nU\0\0\3\0\4\0\a6\0\0\0'\2\1\0B\0\2\0029\0\2\0005\2\3\0B\0\2\1K\0\1\0\1\0\1\tkeys\28etovxqpdygfblzhckisuran\nsetup\bhop\frequire\0" },
     loaded = true,
     path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/start/hop.nvim",
     url = "https://github.com/phaazon/hop.nvim"
@@ -165,6 +166,11 @@ _G.packer_plugins = {
     loaded = true,
     path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/start/indent-blankline.nvim",
     url = "https://github.com/lukas-reineke/indent-blankline.nvim"
+  },
+  ["keymap-layer.nvim"] = {
+    loaded = true,
+    path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/start/keymap-layer.nvim",
+    url = "https://github.com/anuvyklack/keymap-layer.nvim"
   },
   ["lspkind.nvim"] = {
     loaded = true,
@@ -310,6 +316,11 @@ _G.packer_plugins = {
     path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/start/rest.nvim",
     url = "https://github.com/rest-nvim/rest.nvim"
   },
+  ["telescope-file-browser.nvim"] = {
+    loaded = true,
+    path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/start/telescope-file-browser.nvim",
+    url = "https://github.com/nvim-telescope/telescope-file-browser.nvim"
+  },
   ["telescope-fzf-native.nvim"] = {
     cond = { true },
     loaded = false,
@@ -318,7 +329,33 @@ _G.packer_plugins = {
     path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/opt/telescope-fzf-native.nvim",
     url = "https://github.com/nvim-telescope/telescope-fzf-native.nvim"
   },
+  ["telescope-heading.nvim"] = {
+    loaded = true,
+    path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/start/telescope-heading.nvim",
+    url = "https://github.com/crispgm/telescope-heading.nvim"
+  },
+  ["telescope-makefile"] = {
+    loaded = true,
+    path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/start/telescope-makefile",
+    url = "https://github.com/ptethng/telescope-makefile"
+  },
+  ["telescope-symbols.nvim"] = {
+    loaded = true,
+    path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/start/telescope-symbols.nvim",
+    url = "https://github.com/nvim-telescope/telescope-symbols.nvim"
+  },
+  ["telescope-ui-select.nvim"] = {
+    loaded = true,
+    path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/start/telescope-ui-select.nvim",
+    url = "https://github.com/nvim-telescope/telescope-ui-select.nvim"
+  },
+  ["telescope-zoxide"] = {
+    loaded = true,
+    path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/start/telescope-zoxide",
+    url = "https://github.com/jvgrootveld/telescope-zoxide"
+  },
   ["telescope.nvim"] = {
+    config = { "\27LJ\2\n6\0\0\3\0\2\0\0046\0\0\0'\2\1\0B\0\2\1K\0\1\0\27core.plugins.telescope\frequire\0" },
     loaded = true,
     path = "/Users/pablolagreca/.local/share/nvim/site/pack/packer/start/telescope.nvim",
     url = "https://github.com/nvim-telescope/telescope.nvim"
@@ -366,6 +403,22 @@ time([[Defining packer_plugins]], false)
 time([[Config for alpha-nvim]], true)
 try_loadstring("\27LJ\2\n8\0\0\3\0\2\0\0046\0\0\0'\2\1\0B\0\2\1K\0\1\0\29core.plugins.alpha.alpha\frequire\0", "config", "alpha-nvim")
 time([[Config for alpha-nvim]], false)
+-- Config for: hydra.nvim
+time([[Config for hydra.nvim]], true)
+try_loadstring("\27LJ\2\n8\0\0\3\0\2\0\0046\0\0\0'\2\1\0B\0\2\1K\0\1\0\29core.plugins.hydra.hydra\frequire\0", "config", "hydra.nvim")
+time([[Config for hydra.nvim]], false)
+-- Config for: telescope.nvim
+time([[Config for telescope.nvim]], true)
+try_loadstring("\27LJ\2\n6\0\0\3\0\2\0\0046\0\0\0'\2\1\0B\0\2\1K\0\1\0\27core.plugins.telescope\frequire\0", "config", "telescope.nvim")
+time([[Config for telescope.nvim]], false)
+-- Config for: project.nvim
+time([[Config for project.nvim]], true)
+try_loadstring("\27LJ\2\n€\1\0\0\4\0\b\0\v6\0\0\0'\2\1\0B\0\2\0029\0\2\0005\2\4\0005\3\3\0=\3\5\0025\3\6\0=\3\a\2B\0\2\1K\0\1\0\22detection_methods\1\2\0\0\fpattern\rpatterns\1\0\0\1\t\0\0\t.git\17package.json\15.terraform\vgo.mod\21requirements.yml\23pyrightconfig.json\19pyproject.toml\fpom.xml\nsetup\17project_nvim\frequire\0", "config", "project.nvim")
+time([[Config for project.nvim]], false)
+-- Config for: hop.nvim
+time([[Config for hop.nvim]], true)
+try_loadstring("\27LJ\2\nU\0\0\3\0\4\0\a6\0\0\0'\2\1\0B\0\2\0029\0\2\0005\2\3\0B\0\2\1K\0\1\0\1\0\1\tkeys\28etovxqpdygfblzhckisuran\nsetup\bhop\frequire\0", "config", "hop.nvim")
+time([[Config for hop.nvim]], false)
 -- Config for: lspsaga.nvim
 time([[Config for lspsaga.nvim]], true)
 try_loadstring("\27LJ\2\n9\0\0\3\0\3\0\a6\0\0\0'\2\1\0B\0\2\0029\0\2\0004\2\0\0B\0\2\1K\0\1\0\nsetup\flspsaga\frequire\0", "config", "lspsaga.nvim")
@@ -374,14 +427,6 @@ time([[Config for lspsaga.nvim]], false)
 time([[Config for which-key.nvim]], true)
 try_loadstring("\27LJ\2\nF\0\0\2\0\4\0\t6\0\0\0009\0\1\0+\1\2\0=\1\2\0006\0\0\0009\0\1\0)\1,\1=\1\3\0K\0\1\0\15timeoutlen\ftimeout\bopt\bvim\0", "config", "which-key.nvim")
 time([[Config for which-key.nvim]], false)
--- Config for: project.nvim
-time([[Config for project.nvim]], true)
-try_loadstring("\27LJ\2\n€\1\0\0\4\0\b\0\v6\0\0\0'\2\1\0B\0\2\0029\0\2\0005\2\4\0005\3\3\0=\3\5\0025\3\6\0=\3\a\2B\0\2\1K\0\1\0\22detection_methods\1\2\0\0\fpattern\rpatterns\1\0\0\1\t\0\0\t.git\17package.json\15.terraform\vgo.mod\21requirements.yml\23pyrightconfig.json\19pyproject.toml\fpom.xml\nsetup\17project_nvim\frequire\0", "config", "project.nvim")
-time([[Config for project.nvim]], false)
--- Config for: hydra.nvim
-time([[Config for hydra.nvim]], true)
-try_loadstring("\27LJ\2\n8\0\0\3\0\2\0\0046\0\0\0'\2\1\0B\0\2\1K\0\1\0\29core.plugins.hydra.hydra\frequire\0", "config", "hydra.nvim")
-time([[Config for hydra.nvim]], false)
 -- Conditional loads
 time([[Conditional loading of telescope-fzf-native.nvim]], true)
   require("packer.load")({"telescope-fzf-native.nvim"}, {}, _G.packer_plugins)

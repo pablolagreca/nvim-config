@@ -6,9 +6,6 @@ if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
 end
 
 
--- TODO add telescope dap
--- https://github.com/nvim-telescope/telescope-dap.nvim
-
 -- Autocommand that reloads neovim whenever you save this file
 vim.cmd([[
   augroup packer_user_config
@@ -31,37 +28,46 @@ require('packer').startup(function(use)
   use 'shaunsingh/nord.nvim'
   use { "catppuccin/nvim", as = "catppuccin" }
 
- -- detect and allow to select projects
- use ({ "ahmedkhalf/project.nvim",
-  -- can't use 'opts' because module has non standard name 'project_nvim'
-  config = function()
-    require("project_nvim").setup({
-      patterns = {
-        ".git",
-        "package.json",
-        ".terraform",
-        "go.mod",
-        "requirements.yml",
-        "pyrightconfig.json",
-        "pyproject.toml",
-        "pom.xml",
-      },
-      -- detection_methods = { "lsp", "pattern" },
-      detection_methods = { "pattern" },
-    })
-  end,
+  -- detect and allow to select projects
+  use({ "ahmedkhalf/project.nvim",
+    -- can't use 'opts' because module has non standard name 'project_nvim'
+    config = function()
+      require("project_nvim").setup({
+        patterns = {
+          ".git",
+          "package.json",
+          ".terraform",
+          "go.mod",
+          "requirements.yml",
+          "pyrightconfig.json",
+          "pyproject.toml",
+          "pom.xml",
+        },
+        -- detection_methods = { "lsp", "pattern" },
+        detection_methods = { "pattern" },
+      })
+    end,
   })
-  
-use ({ 
-  "anuvyklack/hydra.nvim",
-  dependencies = {
-    "anuvyklack/keymap-layer.nvim",
-  },
-  -- commit = "ea91aa820a6cecc57bde764bb23612fff26a15de",
-  config = function()
-    require("core.plugins.hydra.hydra")
-  end,
+
+  use({
+    "anuvyklack/hydra.nvim",
+    requires = {
+      "anuvyklack/keymap-layer.nvim",
+    },
+    -- commit = "ea91aa820a6cecc57bde764bb23612fff26a15de",
+    config = function()
+      require("core.plugins.hydra.hydra")
+    end,
   })
+
+  use {
+    'phaazon/hop.nvim',
+    branch = 'v2', -- optional but strongly recommended
+    config = function()
+      -- you can configure Hop the way you like here; see :h hop-config
+      require 'hop'.setup { keys = 'etovxqpdygfblzhckisuran' }
+    end
+  }
 
   use { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
@@ -69,7 +75,7 @@ use ({
       -- Automatically install LSPs to stdpath for neovim
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
-
+      "jay-babu/mason-nvim-dap.nvim",
       -- Useful status updates for LSP
       'j-hui/fidget.nvim',
 
@@ -114,13 +120,28 @@ use ({
   use 'numToStr/Comment.nvim' -- "gc" to comment visual regions/lines
   use 'tpope/vim-sleuth' -- Detect tabstop and shiftwidth automatically
 
-  -- Fuzzy Finder (files, lsp, etc)
-  use { 'nvim-telescope/telescope.nvim', branch = '0.1.x', requires = { 'nvim-lua/plenary.nvim' } }
-
   -- Fuzzy Finder Algorithm which requires local dependencies to be built. Only load if `make` is available
   use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make', cond = vim.fn.executable 'make' == 1 }
 
+  use {
+    "nvim-telescope/telescope.nvim", tag = '0.1.1',
+    requires = {
+      "jvgrootveld/telescope-zoxide",
+      "crispgm/telescope-heading.nvim",
+      "nvim-telescope/telescope-symbols.nvim",
+      "nvim-telescope/telescope-file-browser.nvim",
+      "nvim-telescope/telescope-ui-select.nvim",
+      "ptethng/telescope-makefile",
+      "nvim-lua/plenary.nvim",
+    },
+    config = function()
+      require('core.plugins.telescope')
+    end
+  }
+
+  -- require("telescope")
   -- Ranger for file explorer
+  --
   use 'francoiscabrol/ranger.vim'
   use 'rbgrouleff/bclose.vim'
 
@@ -168,12 +189,8 @@ use ({
 
   use 'tpope/vim-surround'
   use 'windwp/nvim-autopairs'
-  use {
-    'phaazon/hop.nvim',
-    branch = 'v2',
-  }
   use({ "goolord/alpha-nvim",
-    dependencies = {
+    requires = {
       "kyazdani42/nvim-web-devicons",
     },
     config = function()
@@ -192,10 +209,6 @@ use ({
     requires = { "nvim-lua/plenary.nvim" },
   }
 
-  -- plugin to use nvim-dap with go delve
-  -- use 'leoluz/nvim-dap-go'
-  -- plugin to easily bridge dap with nvim-dap client
-  use 'jay-babu/mason-nvim-dap.nvim'
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
   if has_plugins then
@@ -314,6 +327,8 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   pattern = '*',
 })
 
+
+
 -- Set lualine as statusline
 -- See `:help lualine.txt`
 require('lualine').setup {
@@ -353,39 +368,6 @@ require('gitsigns').setup {
     changedelete = { text = '~' },
   },
 }
-
--- [[ Configure Telescope ]]
--- See `:help telescope` and `:help telescope.setup()`
-require('telescope').setup {
-  defaults = {
-    mappings = {
-      i = {
-        ['<C-u>'] = false,
-        ['<C-d>'] = false,
-      },
-    },
-  },
-}
-
--- Enable telescope fzf native, if installed
-pcall(require('telescope').load_extension, 'fzf')
-
--- See `:help telescope.builtin`
-vim.keymap.set('n', '<leader>?', require('telescope.builtin').oldfiles, { desc = '[?] Find recently opened files' })
-vim.keymap.set('n', '<leader><space>', require('telescope.builtin').buffers, { desc = '[ ] Find existing buffers' })
-vim.keymap.set('n', '<leader>/', function()
-  -- You can pass additional configuration to telescope to change theme, layout, etc.
-  require('telescope.builtin').current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
-    winblend = 10,
-    previewer = false,
-  })
-end, { desc = '[/] Fuzzily search in current buffer]' })
-
-vim.keymap.set('n', '<leader>sf', require('telescope.builtin').find_files, { desc = '[S]earch [F]iles' })
-vim.keymap.set('n', '<leader>sh', require('telescope.builtin').help_tags, { desc = '[S]earch [H]elp' })
-vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { desc = '[S]earch current [W]ord' })
-vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
-vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostics' })
 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
@@ -1065,9 +1047,14 @@ function M.setup()
       i = { "<cmd>Lspsaga incoming_calls<CR>", "Incoming calls" },
       o = { "<cmd>Lspsaga outgoing_calls<CR>", "Outgoing calls" },
     },
-    d = { "<cmd>Lspsaga peek_definition<CR>", "Peek definition" },
-    D = { "<cmd>Lspsaga goto_definition<CR>", "Go to declaration" },
-    e = { "<cmd>Lspsaga show_line_diagnostics<CR>", "Show line diagnostics" },
+    -- d = { "<cmd>Lspsaga peek_definition<CR>", "Peek definition" },
+    -- D = { "<cmd>Lspsaga goto_definition<CR>", "Go to declaration" },
+    -- e = { "<cmd>Lspsaga show_line_diagnostics<CR>", "Show line diagnostics" },
+    -- f = { "<cmd>Lspsaga lsp_finder<CR>", "Find symbol" },
+    -- h = { "<cmd>Lspsaga hover_doc<CR>", "Hover docs" },
+    d = { ":lua vim.lsp.buf.peek_definition()<cr>", "Peek definition" },
+    D = { ":lua vim.lsp.buf.peek_definition()<cr>", "Go to declaration" },
+    e = { ":lua vim.lsp.buf.show_line_diagnostics()<cr>", "Show line diagnostics" },
     f = { "<cmd>Lspsaga lsp_finder<CR>", "Find symbol" },
     h = { "<cmd>Lspsaga hover_doc<CR>", "Hover docs" },
     i = { ":lua vim.lsp.buf.implementation()<cr>", "Go to implementation" },
