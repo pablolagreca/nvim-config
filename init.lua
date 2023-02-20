@@ -29,7 +29,39 @@ require('packer').startup(function(use)
 
   -- use 'bluz71/vim-nightfly-guicolors'
   use 'shaunsingh/nord.nvim'
+  use { "catppuccin/nvim", as = "catppuccin" }
 
+ -- detect and allow to select projects
+ use ({ "ahmedkhalf/project.nvim",
+  -- can't use 'opts' because module has non standard name 'project_nvim'
+  config = function()
+    require("project_nvim").setup({
+      patterns = {
+        ".git",
+        "package.json",
+        ".terraform",
+        "go.mod",
+        "requirements.yml",
+        "pyrightconfig.json",
+        "pyproject.toml",
+        "pom.xml",
+      },
+      -- detection_methods = { "lsp", "pattern" },
+      detection_methods = { "pattern" },
+    })
+  end,
+  })
+  
+use ({ 
+  "anuvyklack/hydra.nvim",
+  dependencies = {
+    "anuvyklack/keymap-layer.nvim",
+  },
+  -- commit = "ea91aa820a6cecc57bde764bb23612fff26a15de",
+  config = function()
+    require("core.plugins.hydra.hydra")
+  end,
+  })
 
   use { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
@@ -244,10 +276,10 @@ vim.opt.smartcase = true
 vim.opt.updatetime = 250
 vim.wo.signcolumn = 'yes'
 
-require('nord').set()
+-- require('nord').set()
 -- Set colorscheme
 vim.opt.termguicolors = true
--- vim.cmd [[colorscheme nord]]
+vim.cmd.colorscheme "catppuccin"
 
 -- Set completeopt to have a better completion experience
 vim.opt.completeopt = 'menuone,noselect'
@@ -867,6 +899,22 @@ end
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
 --
+local map = vim.keymap.set
+-- paste over currently selected text without yanking it
+map("v", "p", '"_dp')
+map("v", "P", '"_dP')
+
+-- switch buffer
+map("n", "<tab>", "<cmd>bnext<cr>", { desc = "Next buffer" })
+map("n", "<S-tab>", "<cmd>bprevious<cr>", { desc = "Prev buffer" })
+
+-- save like your are used to
+map({ "i", "v", "n", "s" }, "<C-s>", "<cmd>w<cr><esc>", { desc = "Save file" })
+
+-- move over a closing element in insert mode
+map("i", "<C-l>", function()
+  return require("core.utils.functions").escapePair()
+end)
 
 local M = {}
 local hop = require('hop')
@@ -907,11 +955,17 @@ function M.setup()
     ["<space>"] = { "Find existing buffers" },
     ["/"] = { "Fuzzily search in current file" },
     --["x"] = { "<cmd>Win<CR>", "Select window" },
-
     b = {
-      name = "Buffer",
-      c = { "<Cmd>bd!<Cr>", "Close current buffer" },
-      D = { "<Cmd>%bd|e#|bd#<Cr>", "Delete all buffers" },
+      name = "Buffers",
+      b = {
+        "<cmd>Telescope buffers<cr>",
+        "Find buffer",
+      },
+      D = {
+        "<cmd>%bd|e#|bd#<cr>",
+        "Close all but the current buffer",
+      },
+      d = { "<cmd>Bdelete<cr>", "Close buffer" },
     },
     c = {
       name = "Code",
@@ -960,14 +1014,6 @@ function M.setup()
       j = { "<cmd>HopChar2<cr>", "Jump to char2" },
       l = { "<cmd>HopLine<cr>", "Jump to line" },
     },
-    s = {
-      name = "Search",
-      d = { "Diagnostics" },
-      f = { "Files by name" },
-      F = { ":lua require('telescope.builtin').find_files({ cwd = '~', hidden = true})<cr>", "Files in home by name" },
-      g = { "<cmd>Telescope live_grep<cr>", "Files by grep" },
-      h = { "Help" },
-    },
     u = {
       name = "Utilities",
       d = { "<cmd>CD<cr>", "Show diff" },
@@ -993,7 +1039,6 @@ function M.setup()
       t = { "<cmd>NvimTreeToggle<cr>", "Open explorer" },
       f = { "<cmd>NvimTreeFindFile<cr>", "Open explorer in current file" }
     },
-    w = { ":lua require('nvim-window').pick()<cr>", "Window pick" },
   }
 
 
@@ -1008,6 +1053,7 @@ function M.setup()
   }
 
   local topLevelMappings = {}
+  topLevelMappings["<tab>"] = { "<cmd>e#<cr>", "Prev buffer" }
   topLevelMappings["["] = { d = "Previous diagnostic" }
   topLevelMappings["]"] = { d = "Next diagnostic" }
   topLevelMappings["g"] = {
