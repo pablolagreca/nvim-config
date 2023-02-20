@@ -3,7 +3,6 @@ local is_bootstrap = false
 if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
   is_bootstrap = true
   vim.fn.system { 'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path }
-
 end
 
 
@@ -30,6 +29,7 @@ require('packer').startup(function(use)
 
   -- use 'bluz71/vim-nightfly-guicolors'
   use 'shaunsingh/nord.nvim'
+
 
   use { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
@@ -66,6 +66,11 @@ require('packer').startup(function(use)
     'nvim-treesitter/nvim-treesitter-textobjects',
     after = 'nvim-treesitter',
   }
+
+
+  -- govim plugin
+  use 'ray-x/go.nvim'
+  use 'ray-x/guihua.lua' -- recommended if need floating window support
   -- Git related plugins
   use 'tpope/vim-fugitive'
   use 'tpope/vim-rhubarb'
@@ -119,6 +124,14 @@ require('packer').startup(function(use)
   use({
     "glepnir/lspsaga.nvim",
     branch = "main",
+config = function()
+        require("lspsaga").setup({})
+    end,
+    requires = {
+        {"nvim-tree/nvim-web-devicons"},
+        --Please make sure you install markdown and markdown_inline parser
+        {"nvim-treesitter/nvim-treesitter"}
+    }
   })
 
   use 'tpope/vim-surround'
@@ -128,8 +141,6 @@ require('packer').startup(function(use)
     branch = 'v2',
   }
 
-  -- Golang configuration
-  use 'fatih/vim-go'
   -- Pick windows plugin
   use 'https://gitlab.com/yorickpeterse/nvim-window'
   -- Persist breakpoints after restart nvim
@@ -137,6 +148,15 @@ require('packer').startup(function(use)
   -- Snippets support
   use({ "L3MON4D3/LuaSnip", tag = "v1.2.1" })
 
+  use {
+    "rest-nvim/rest.nvim",
+    requires = { "nvim-lua/plenary.nvim" },
+  }
+
+  -- plugin to use nvim-dap with go delve
+  -- use 'leoluz/nvim-dap-go'
+  -- plugin to easily bridge dap with nvim-dap client
+  use 'jay-babu/mason-nvim-dap.nvim'
   -- Add custom plugins to packer from ~/.config/nvim/lua/custom/plugins.lua
   local has_plugins, plugins = pcall(require, 'custom.plugins')
   if has_plugins then
@@ -332,7 +352,7 @@ vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { de
 -- See `:help nvim-treesitter`
 require('nvim-treesitter.configs').setup {
   -- Add languages to be installed here that you want installed for treesitter
-  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'markdown', 'python', 'rust', 'typescript', 'help', 'vim', 'java' },
+  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'markdown', 'markdown_inline', 'python', 'rust', 'typescript', 'help', 'vim', 'java', 'json', 'http' },
 
   highlight = { enable = true },
   indent = { enable = true, disable = { 'python' } },
@@ -441,6 +461,10 @@ capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
 -- Setup mason so it can manage external tooling
 require('mason').setup()
+-- automatically setup nvim-dap client to use installed daps
+require("mason-nvim-dap").setup({
+  automatic_setup = true,
+})
 
 -- Ensure the servers above are installed
 local mason_lspconfig = require 'mason-lspconfig'
@@ -473,7 +497,7 @@ cmp.setup {
     end,
   },
   mapping = cmp.mapping.preset.insert {
-    ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-d>'] = cmp.mapping.scroll_docs( -4),
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<CR>'] = cmp.mapping.confirm {
@@ -492,8 +516,8 @@ cmp.setup {
     ['<S-Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_prev_item()
-      elseif luasnip.jumpable(-1) then
-        luasnip.jump(-1)
+      elseif luasnip.jumpable( -1) then
+        luasnip.jump( -1)
       else
         fallback()
       end
@@ -539,7 +563,7 @@ vim.cmd([[ highlight NvimTreeIndentMarker guifg=#3FC5FF ]])
 
 -- set termguicolors to enable highlight groups
 local HEIGHT_RATIO = 0.8 -- You can change this
-local WIDTH_RATIO = 0.5  -- You can change this tooim.opt.termguicolors = true
+local WIDTH_RATIO = 0.5 -- You can change this tooim.opt.termguicolors = true
 
 require("nvim-tree").setup({
   renderer = {
@@ -599,31 +623,44 @@ if not autopairs_setup then
 end
 
 
--- LSP Saga configuration
-require('lspsaga').setup({
-  -- keybinds for navigation in lspsaga window
-  scroll_preview = { scroll_down = "<C-f>", scroll_up = "<C-b>" },
-  -- use enter to open file with definition preview
-  definition = {
-    edit = "<CR>",
+-- rest plugin
+require("rest-nvim").setup({
+  -- Open request results in a horizontal split
+  result_split_horizontal = false,
+  -- Keep the http file buffer above|left when split horizontal|vertical
+  result_split_in_place = false,
+  -- Skip SSL verification, useful for unknown certificates
+  skip_ssl_verification = false,
+  -- Encode URL before making request
+  encode_url = true,
+  -- Highlight request on run
+  highlight = {
+    enabled = true,
+    timeout = 150,
   },
-  ui = {
-    colors = {
-      normal_bg = "#022746",
+  result = {
+    -- toggle showing URL, HTTP info, headers at top the of result window
+    show_url = true,
+    show_http_info = true,
+    show_headers = true,
+    -- executables or functions for formatting response body [optional]
+    -- set them to false if you want to disable them
+    formatters = {
+      json = "jq",
+      html = function(body)
+        return vim.fn.system({ "tidy", "-i", "-q", "-" }, body)
+      end
     },
   },
+  -- Jump to request line on run
+  jump_to_request = false,
+  env_file = '.env',
+  custom_dynamic_variables = {},
+  yank_dry_run = true,
 })
 
 
--- configure autopairs
-autopairs.setup({
-  check_ts = true, -- enable treesitter
-  ts_config = {
-    lua = { "string" }, -- don't add pairs in lua string treesitter nodes
-    javascript = { "template_string" }, -- don't add pairs in javscript template_string treesitter nodes
-    java = false, -- don't check treesitter on java
-  },
-})
+-- require('dap-go').setup()
 
 -- import nvim-autopairs completion functionality safely
 local cmp_autopairs_setup, cmp_autopairs = pcall(require, "nvim-autopairs.completion.cmp")
@@ -647,6 +684,8 @@ vim.fn.sign_define('DapStopped', { text = '▶️', texthl = '', linehl = '', nu
 require('persistent-breakpoints').setup {
   load_breakpoints_event = { "BufReadPost" }
 }
+
+require('go').setup()
 
 local dap, dapui = require("dap"), require("dapui")
 dapui.setup({
@@ -748,6 +787,18 @@ dap.configurations.java = {
   }
 }
 
+
+-- dap.configurations.go = {
+--   {
+--     type = 'go';
+--     name = 'Debug';
+--     request = 'launch';
+--     showLog = true;
+--     program = "${file}";
+--     dlvToolPath = vim.fn.exepath('dlv')  -- Adjust to where delve is installed
+--   },
+-- }
+
 function show_dap_centered_scopes()
   local widgets = require 'dap.ui.widgets'
   widgets.centered_float(widgets.scopes)
@@ -784,7 +835,8 @@ end
 function get_spring_boot_runner(profile, debug)
   local debug_param = ""
   if debug then
-    debug_param = ' -Dspring-boot.run.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005" '
+    debug_param =
+    ' -Dspring-boot.run.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005" '
   end
 
   local profile_param = ""
@@ -853,7 +905,6 @@ function M.setup()
       c = { "<Cmd>bd!<Cr>", "Close current buffer" },
       D = { "<Cmd>%bd|e#|bd#<Cr>", "Delete all buffers" },
     },
-
     c = {
       name = "Code",
       a = { "<cmd>Lspsaga code_action<CR>", "Code action" },
@@ -864,10 +915,10 @@ function M.setup()
         w = { "<cmd>Lspsaga rename ++project<CR>", "Rename word" },
       }
     },
-
     d = {
       name = "Debug",
       a = { ":lua attach_to_debug()<cr>", "Attach to debug" },
+      d = { ":lua require'dap'.run_last()<cr>", "Run last debug session" },
       t = {
         name = "Test",
         m = { ":lua run_java_test_method(true)<cr>", "Test method" },
@@ -883,13 +934,11 @@ function M.setup()
       r = { ":lua request'dap'.repl.open()<cr>", "Open REPL" },
       s = { ":lua show_dap_centered_scopes()<cr>", "Show debug scopes" }
     },
-
     e = {
       name = "Edit",
       o = { "o<Esc><cr>", "Add blank line" },
       O = { "O<Esc><cr>", "Add blank line up" },
     },
-
     g = {
       name = "Git",
       d = { "<cmd>Gitsigns diffthis<cr>", "Diff file" },
@@ -897,14 +946,12 @@ function M.setup()
       p = { "<cmd>Gitsigns prev_hunk<cr>", "Previous change" },
       r = { "<cmd>Gitsigns reset_hunk<cr>", "Reset change" },
     },
-
     j = {
       name = "Jump",
       c = { "<cmd>HopChar1<cr>", "Jump to char" },
       j = { "<cmd>HopChar2<cr>", "Jump to char2" },
       l = { "<cmd>HopLine<cr>", "Jump to line" },
     },
-
     s = {
       name = "Search",
       d = { "Diagnostics" },
@@ -913,7 +960,6 @@ function M.setup()
       g = { "<cmd>Telescope live_grep<cr>", "Files by grep" },
       h = { "Help" },
     },
-
     u = {
       name = "Utilities",
       d = { "<cmd>CD<cr>", "Show diff" },
@@ -922,7 +968,6 @@ function M.setup()
       u = { "<cmd>FloatermToggle<cr>", "Terminal toggle" },
       y = { "<cmd>FloatermNext<cr>", "Next terminal" },
     },
-
     r = {
       name = "Run",
       t = {
@@ -946,14 +991,12 @@ function M.setup()
 
 
   local mappingsTerminal = {
-
     u = {
       name = "Utilities",
       t = { "<cmd>FloatermNew<cr>", "New terminal" },
       u = { "<cmd>FloatermToggle<cr>", "Terminal toggle" },
       y = { "<cmd>FloatermNext<cr>", "Next terminal" },
     },
-
   }
 
   local topLevelMappings = {}
@@ -1021,12 +1064,26 @@ function M.setup()
   whichkey.register(mappings, opts)
   whichkey.register(mappingsTerminal, optsTerminal)
   whichkey.register(topLevelMappings)
-  -- vim.cmd('autocmd FileType java lua JavaMappings()')
+  vim.cmd('autocmd FileType java lua JavaMappings()')
   function JavaMappings()
     mappings.c.c = { ":lua require('jdtls').extract_constant()<CR>", "Extract constant" }
     mappings.c.m = { ":lua require('jdtls').extract_method(true)<cr>", "Extract method" }
     mappings.c.o = { ":lua require'jdtls'.organize_imports()<CR>", "Organize imports" }
     mappings.c.v = { ":lua require('jdtls').extract_variable()<CR>", "Extract variable" }
+    whichkey.register(mappings, opts)
+  end
+
+  vim.cmd('autocmd FileType go lua GoMappings()')
+  function GoMappings()
+    mappings.c.o = { ":lua vim.lsp.buf.organize_imports()<cr>", "Organize imports" }
+    whichkey.register(mappings, opts)
+  end
+
+  vim.cmd('autocmd FileType http lua HttpMappings()')
+  function HttpMappings()
+    mappings.r.h = { "<Plug>RestNvim", "HTTP request" }
+    mappings.r.l = { "<Plug>RestNvimLast", "Last HTTP request" }
+    mappings.r.p = { "<Plug>RestNvimPreview", "HTTP request preview" }
     whichkey.register(mappings, opts)
   end
 end
