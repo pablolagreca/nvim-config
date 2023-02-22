@@ -60,7 +60,7 @@ Hydra({
     { "R", cmd("wincmd R") },
     -- pick window
     -- { "p",  pick_window, opts },
-    { "w",  ":lua require('nvim-window').pick()<cr>", opts },
+    { "w",  ":lua require('nvim-window').pick()<CR>", opts },
     { "q", nil, opts },
   },
 })

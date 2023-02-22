@@ -2,3 +2,5 @@
 -- require("core.plugins.hydra.spelling")
 require("core.plugins.hydra.telescope")
 require("core.plugins.hydra.windows")
+require("core.plugins.hydra.vim-options")
+require("core.plugins.hydra.git")

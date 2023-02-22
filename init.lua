@@ -110,9 +110,11 @@ require('packer').startup(function(use)
   use 'ray-x/go.nvim'
   use 'ray-x/guihua.lua' -- recommended if need floating window support
   -- Git related plugins
-  use 'tpope/vim-fugitive'
-  use 'tpope/vim-rhubarb'
+  -- TODO review if we are using any of these commented git plugins
+  -- use 'tpope/vim-fugitive'
+  -- use 'tpope/vim-rhubarb'
   use 'lewis6991/gitsigns.nvim'
+  use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' }
 
   use 'navarasu/onedark.nvim' -- Theme inspired by Atom
   use 'nvim-lualine/lualine.nvim' -- Fancier statusline
@@ -142,7 +144,7 @@ require('packer').startup(function(use)
   -- require("telescope")
   -- Ranger for file explorer
   --
-  use 'francoiscabrol/ranger.vim'
+  -- use 'francoiscabrol/ranger.vim'
   use 'rbgrouleff/bclose.vim'
 
   -- Whichkey
@@ -983,19 +985,6 @@ function M.setup()
       o = { "o<Esc><cr>", "Add blank line" },
       O = { "O<Esc><cr>", "Add blank line up" },
     },
-    g = {
-      name = "Git",
-      d = { "<cmd>Gitsigns diffthis<cr>", "Diff file" },
-      n = { "<cmd>Gitsigns next_hunk<cr>", "Next change" },
-      p = { "<cmd>Gitsigns prev_hunk<cr>", "Previous change" },
-      r = { "<cmd>Gitsigns reset_hunk<cr>", "Reset change" },
-    },
-    j = {
-      name = "Jump",
-      c = { "<cmd>HopChar1<cr>", "Jump to char" },
-      j = { "<cmd>HopChar2<cr>", "Jump to char2" },
-      l = { "<cmd>HopLine<cr>", "Jump to line" },
-    },
     u = {
       name = "Utilities",
       d = { "<cmd>CD<cr>", "Show diff" },
@@ -1012,6 +1001,7 @@ function M.setup()
         c = { ":lua run_java_test_class()<cr>", "Test class" }
       },
     },
+    -- s = { ":lua require('telescope.builtin').find_files()<cr>", "Go to document symbol" },
     t = {
       name = "Explorer / Tabs",
       o = { "<cmd>tabnew<cr>", "Open new tab" },
@@ -1038,6 +1028,7 @@ function M.setup()
   topLevelMappings["<tab>"] = { "<cmd>e#<cr>", "Prev buffer" }
   topLevelMappings["["] = { d = "Previous diagnostic" }
   topLevelMappings["]"] = { d = "Next diagnostic" }
+  topLevelMappings["s"] = { "<cmd>HopChar2<cr>", "Jump to char2" }
   topLevelMappings["g"] = {
     name = "Go to",
     c = {
@@ -1047,16 +1038,15 @@ function M.setup()
       i = { "<cmd>Lspsaga incoming_calls<CR>", "Incoming calls" },
       o = { "<cmd>Lspsaga outgoing_calls<CR>", "Outgoing calls" },
     },
-    -- d = { "<cmd>Lspsaga peek_definition<CR>", "Peek definition" },
-    -- D = { "<cmd>Lspsaga goto_definition<CR>", "Go to declaration" },
-    -- e = { "<cmd>Lspsaga show_line_diagnostics<CR>", "Show line diagnostics" },
-    -- f = { "<cmd>Lspsaga lsp_finder<CR>", "Find symbol" },
-    -- h = { "<cmd>Lspsaga hover_doc<CR>", "Hover docs" },
-    d = { ":lua vim.lsp.buf.peek_definition()<cr>", "Peek definition" },
-    D = { ":lua vim.lsp.buf.peek_definition()<cr>", "Go to declaration" },
-    e = { ":lua vim.lsp.buf.show_line_diagnostics()<cr>", "Show line diagnostics" },
+    d = { "<cmd>Lspsaga peek_definition<CR>", "Peek definition" },
+    D = { "<cmd>Lspsaga goto_definition<CR>", "Go to declaration" },
+    e = { "<cmd>Lspsaga show_line_diagnostics<CR>", "Show line diagnostics" },
     f = { "<cmd>Lspsaga lsp_finder<CR>", "Find symbol" },
     h = { "<cmd>Lspsaga hover_doc<CR>", "Hover docs" },
+    -- d = { ":lua vim.lsp.buf.peek_definition()<cr>", "Peek definition" },
+    -- D = { ":lua vim.lsp.buf.peek_definition()<cr>", "Go to declaration" },
+    -- e = { ":lua vim.lsp.buf.show_line_diagnostics()<cr>", "Show line diagnostics" },
+    -- h = { "<cmd>Lspsaga hover_doc<CR>", "Hover docs" },
     i = { ":lua vim.lsp.buf.implementation()<cr>", "Go to implementation" },
     k = { "<cmd>Lspsaga hover_doc ++keep<CR>", "Hover docs - keep window" },
     o = { "<cmd>Lspsaga outline<CR>", "Toggle outline" },
