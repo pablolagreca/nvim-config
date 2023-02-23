@@ -29,7 +29,8 @@ require('packer').startup(function(use)
   use { "catppuccin/nvim", as = "catppuccin" }
 
   -- detect and allow to select projects
-  use({ "ahmedkhalf/project.nvim",
+  use({
+    "ahmedkhalf/project.nvim",
     -- can't use 'opts' because module has non standard name 'project_nvim'
     config = function()
       require("project_nvim").setup({
@@ -59,6 +60,63 @@ require('packer').startup(function(use)
       require("core.plugins.hydra.hydra")
     end,
   })
+
+  -- Enable `lukas-reineke/indent-blankline.nvim`
+  -- Shows indentation more clearly.
+  use { "lukas-reineke/indent-blankline.nvim",
+    config = function()
+      require("indent_blankline").setup {
+        -- for example, context is off by default, use this to turn it on
+        show_current_context = true,
+        show_current_context_start = true,
+        show_end_of_line = true,
+        char = '┊',
+        show_trailing_blankline_indent = false,
+      }
+    end
+  }
+
+  -- Allows to pick an icon with IconPicker commands
+  use({
+    "ziontee113/icon-picker.nvim",
+    requires = {
+      "stevearc/dressing.nvim"
+    },
+    config = function()
+      require("icon-picker").setup({
+        disable_legacy_commands = true
+      })
+    end,
+  })
+
+  -- Adds a border to the active window with a different color than the rest
+  use {
+    "nvim-zh/colorful-winsep.nvim",
+    config = function()
+      require('colorful-winsep').setup({
+      })
+    end
+  }
+
+  -- automatically adds closing [square] braces, curly braces, etc
+  use {
+    "windwp/nvim-autopairs",
+    config = function()
+      require("nvim-autopairs").setup {
+        enable_check_bracket_line = false, -- Don't add pairs if it already has a close pair in the same line
+        ignored_next_char = "[%w%.]", -- will ignore alphanumeric and `.` symbol
+        check_ts = true, -- use treesitter to check for a pair.
+        ts_config = {
+          lua = { "string" }, -- it will not add pair on that treesitter node
+          javascript = { "template_string" },
+          java = false, -- don't check treesitter on java
+
+        }, }
+    end
+  }
+
+  -- Plugin to show pretty notifications
+  use { 'rcarriga/nvim-notify' }
 
   use {
     'phaazon/hop.nvim',
@@ -118,7 +176,6 @@ require('packer').startup(function(use)
 
   use 'navarasu/onedark.nvim' -- Theme inspired by Atom
   use 'nvim-lualine/lualine.nvim' -- Fancier statusline
-  use 'lukas-reineke/indent-blankline.nvim' -- Add indentatio
   use 'numToStr/Comment.nvim' -- "gc" to comment visual regions/lines
   use 'tpope/vim-sleuth' -- Detect tabstop and shiftwidth automatically
 
@@ -167,8 +224,17 @@ require('packer').startup(function(use)
 
   -- Markdown
   -- install without yarn or npm
-  use 'iamcco/markdown-preview.nvim'
-  -- ndap client
+  use({
+    "iamcco/markdown-preview.nvim",
+    run = function() vim.fn["mkdp#util#install"]() end,
+  })
+  -- TODO - this plugin should be install correctly with the settings above but it is not. We need to do the following manually to make it work:
+  --
+  --  cd ~/.local/share/nvim/site/pack/packer/start/
+  -- git clone https://github.com/iamcco/markdown-preview.nvim.git
+  -- cd markdown-preview.nvim
+  -- yarn install
+  -- yarn build --
   use 'mfussenegger/nvim-dap'
   use 'theHamsta/nvim-dap-virtual-text'
   use { "rcarriga/nvim-dap-ui", requires = { "mfussenegger/nvim-dap" } }
@@ -188,10 +254,17 @@ require('packer').startup(function(use)
       { "nvim-treesitter/nvim-treesitter" }
     }
   })
+  
+  -- TODO plugin to add surround to text.
+  use {
+    "ur4ltz/surround.nvim",
+    config = function()
+      require "surround".setup { mappings_style = "sandwich" }
+    end
+  }
 
-  use 'tpope/vim-surround'
-  use 'windwp/nvim-autopairs'
-  use({ "goolord/alpha-nvim",
+  use({
+    "goolord/alpha-nvim",
     requires = {
       "kyazdani42/nvim-web-devicons",
     },
@@ -352,12 +425,6 @@ require('hop').setup({
   case_insensitive = false
 })
 
--- Enable `lukas-reineke/indent-blankline.nvim`
--- See `:help indent_blankline.txt`
-require('indent_blankline').setup {
-  char = '┊',
-  show_trailing_blankline_indent = false,
-}
 
 -- Gitsigns
 -- See `:help gitsigns.txt`
@@ -521,7 +588,7 @@ cmp.setup {
     end,
   },
   mapping = cmp.mapping.preset.insert {
-    ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-d>'] = cmp.mapping.scroll_docs( -4),
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<CR>'] = cmp.mapping.confirm {
@@ -540,8 +607,8 @@ cmp.setup {
     ['<S-Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_prev_item()
-      elseif luasnip.jumpable(-1) then
-        luasnip.jump(-1)
+      elseif luasnip.jumpable( -1) then
+        luasnip.jump( -1)
       else
         fallback()
       end
@@ -1028,7 +1095,6 @@ function M.setup()
   topLevelMappings["<tab>"] = { "<cmd>e#<cr>", "Prev buffer" }
   topLevelMappings["["] = { d = "Previous diagnostic" }
   topLevelMappings["]"] = { d = "Next diagnostic" }
-  topLevelMappings["s"] = { "<cmd>HopChar2<cr>", "Jump to char2" }
   topLevelMappings["g"] = {
     name = "Go to",
     c = {
@@ -1095,6 +1161,18 @@ function M.setup()
   whichkey.register(mappings, opts)
   whichkey.register(mappingsTerminal, optsTerminal)
   whichkey.register(topLevelMappings)
+  -- TODO assign the functions to this mappings
+  whichkey.register({
+    sa = "Add surrounding",
+    sd = "Delete surrounding",
+    sh = "Highlight surrounding",
+    sn = "Surround update n lines",
+    sr = "Replace surrounding",
+    sF = "Find left surrounding",
+    sf = "Replace right surrounding",
+    ss = { "<cmd>HopChar2<cr>", "Jump to character" },
+    st = { "<cmd>lua require('tsht').nodes()<cr>", "TS hint textobject" },
+  })
   vim.cmd('autocmd FileType java lua JavaMappings()')
   function JavaMappings()
     mappings.c.c = { ":lua require('jdtls').extract_constant()<CR>", "Extract constant" }
