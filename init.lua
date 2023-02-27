@@ -28,27 +28,28 @@ require('packer').startup(function(use)
   use 'shaunsingh/nord.nvim'
   use { "catppuccin/nvim", as = "catppuccin" }
 
+  -- TODO consider removing this plugins since auto-session should be enough
   -- detect and allow to select projects
-  use({
-    "ahmedkhalf/project.nvim",
-    -- can't use 'opts' because module has non standard name 'project_nvim'
-    config = function()
-      require("project_nvim").setup({
-        patterns = {
-          ".git",
-          "package.json",
-          ".terraform",
-          "go.mod",
-          "requirements.yml",
-          "pyrightconfig.json",
-          "pyproject.toml",
-          "pom.xml",
-        },
-        -- detection_methods = { "lsp", "pattern" },
-        detection_methods = { "pattern" },
-      })
-    end,
-  })
+  -- use({
+  --   "ahmedkhalf/project.nvim",
+  --   -- can't use 'opts' because module has non standard name 'project_nvim'
+  --   config = function()
+  --     require("project_nvim").setup({
+  --       patterns = {
+  --         ".git",
+  --         "package.json",
+  --         ".terraform",
+  --         "go.mod",
+  --         "requirements.yml",
+  --         "pyrightconfig.json",
+  --         "pyproject.toml",
+  --         "pom.xml",
+  --       },
+  --       -- detection_methods = { "lsp", "pattern" },
+  --       detection_methods = { "pattern" },
+  --     })
+  --   end,
+  -- })
 
   use({
     "anuvyklack/hydra.nvim",
@@ -118,6 +119,48 @@ require('packer').startup(function(use)
   -- Plugin to show pretty notifications
   use { 'rcarriga/nvim-notify' }
 
+  -- NVIM tree
+  use {
+    'nvim-tree/nvim-tree.lua',
+    requires = {
+      'nvim-tree/nvim-web-devicons',
+    },
+    tag = 'nightly'
+  }
+
+  use {
+    'shatur/neovim-session-manager',
+    config = function()
+      local Path = require('plenary.path')
+      require('session_manager').setup({
+        sessions_dir = Path:new(vim.fn.stdpath('data'), 'sessions'), -- The directory where the session files will be saved.
+        path_replacer = '__', -- The character to which the path separator will be replaced for session files.
+        colon_replacer = '++', -- The character to which the colon symbol will be replaced for session files.
+        autoload_mode = require('session_manager.config').AutoloadMode.LastSession, -- Define what to do when Neovim is started without arguments. Possible values: Disabled, CurrentDir, LastSession
+        autosave_last_session = true, -- Automatically save last session on exit and on session switch.
+        autosave_ignore_not_normal = true, -- Plugin will not save a session when no buffers are opened, or all of them aren't writable or listed.
+        autosave_ignore_dirs = {}, -- A list of directories where the session will not be autosaved.
+        autosave_ignore_filetypes = { -- All buffers of these file types will be closed before the session is saved.
+          'gitcommit',
+        },
+        autosave_ignore_buftypes = {}, -- All buffers of these bufer types will be closed before the session is saved.
+        autosave_only_in_session = false, -- Always autosaves session. If true, only autosaves after a session is active.
+        max_path_length = 80, -- Shorten the display path if length exceeds this threshold. Use 0 if don't want to shorten the path at all.
+      })
+    end
+  }
+
+  -- Additional configuration to reset nvim-tree when changing sessions
+  local config_group = vim.api.nvim_create_augroup('MySessionManager', {})
+  vim.api.nvim_create_autocmd({ 'User' }, {
+    pattern = "SessionLoadPost",
+    group = config_group,
+    callback = function()
+      local nt = require('nvim-tree')
+      nt.change_dir(vim.fn.getcwd())
+    end
+  })
+
   use {
     'phaazon/hop.nvim',
     branch = 'v2', -- optional but strongly recommended
@@ -172,6 +215,7 @@ require('packer').startup(function(use)
   -- use 'tpope/vim-fugitive'
   -- use 'tpope/vim-rhubarb'
   use 'lewis6991/gitsigns.nvim'
+
   use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' }
 
   use 'navarasu/onedark.nvim' -- Theme inspired by Atom
@@ -213,14 +257,6 @@ require('packer').startup(function(use)
   -- FloatTerm
   use 'voldikss/vim-floaterm'
 
-  -- NVIM tree
-  use {
-    'nvim-tree/nvim-tree.lua',
-    requires = {
-      'nvim-tree/nvim-web-devicons',
-    },
-    tag = 'nightly'
-  }
 
   -- Markdown
   -- install without yarn or npm
@@ -254,7 +290,7 @@ require('packer').startup(function(use)
       { "nvim-treesitter/nvim-treesitter" }
     }
   })
-  
+
   -- TODO plugin to add surround to text.
   use {
     "ur4ltz/surround.nvim",
@@ -403,13 +439,12 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 })
 
 
-
 -- Set lualine as statusline
 -- See `:help lualine.txt`
 require('lualine').setup {
   options = {
     icons_enabled = false,
-    theme = nord,
+    theme = tokyonight,
     component_separators = '|',
     section_separators = '',
   },
@@ -671,6 +706,9 @@ require("nvim-tree").setup({
   -- explorer to work well with
   -- window splits
   actions = {
+    change_dir = {
+      global = true, --this config is required to work well with auto-sessions https://github.com/rmagatti/auto-session/issues/178
+    },
     open_file = {
       window_picker = {
         enable = false,
@@ -1071,12 +1109,12 @@ function M.setup()
     -- s = { ":lua require('telescope.builtin').find_files()<cr>", "Go to document symbol" },
     t = {
       name = "Explorer / Tabs",
-      o = { "<cmd>tabnew<cr>", "Open new tab" },
+      f = { "<cmd>NvimTreeFindFile<cr>", "Open explorer in current file" },
       x = { "<cmd>tabclose<cr>", "Close tab" },
       n = { "<cmd>tabn<cr>", "Next tab" },
+      o = { "<cmd>tabnew<cr>", "Open new tab" },
       p = { "<cmd>tabp<cr>", "Previous tab" },
       t = { "<cmd>NvimTreeToggle<cr>", "Open explorer" },
-      f = { "<cmd>NvimTreeFindFile<cr>", "Open explorer in current file" }
     },
   }
 
@@ -1101,8 +1139,8 @@ function M.setup()
       name = "Call hierarchy / Comment",
       c = { "Comment line" },
       b = { "Comment block" },
-      i = { "<cmd>Lspsaga incoming_calls<CR>", "Incoming calls" },
-      o = { "<cmd>Lspsaga outgoing_calls<CR>", "Outgoing calls" },
+      i = { "<cmd>Lspsaga incoming_calls()<CR>", "Incoming calls" },
+      o = { "<cmd>Lspsaga outgoing_calls()<CR>", "Outgoing calls" },
     },
     d = { "<cmd>Lspsaga peek_definition<CR>", "Peek definition" },
     D = { "<cmd>Lspsaga goto_definition<CR>", "Go to declaration" },
@@ -1170,7 +1208,7 @@ function M.setup()
     sr = "Replace surrounding",
     sF = "Find left surrounding",
     sf = "Replace right surrounding",
-    ss = { "<cmd>HopChar2<cr>", "Jump to character" },
+    ss = { "<cmd>HopChar1<cr>", "Jump to character" },
     st = { "<cmd>lua require('tsht').nodes()<cr>", "TS hint textobject" },
   })
   vim.cmd('autocmd FileType java lua JavaMappings()')

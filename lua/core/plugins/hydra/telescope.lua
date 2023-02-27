@@ -54,14 +54,15 @@ local Hydra = require('hydra')
 local cmd = require('hydra.keymap-util').cmd
 
 local hint = [[
- _f_: files       _m_: marks
- _o_: old files   _g_: live grep
- _p_: projects    _/_: search in file
+ _f_: files          _m_: marks
+ _o_: old files      _g_: live grep
+ _/_: search in file
+ _F_: files in home  _s_: sessions
 
- _r_: resume      _u_: undotree
- _h_: vim help    _c_: execute command
- _k_: keymaps     _;_: commands history 
- _O_: options     _?_: search history
+ _r_: resume         _u_: undotree
+ _h_: vim help       _c_: execute command
+ _k_: keymaps        _;_: commands history 
+ _O_: options        _?_: search history
 
  _<Enter>_: Telescope           _<Esc>_
 ]]
@@ -81,6 +82,7 @@ Hydra({
    body = '<Leader>s',
    heads = {
       { 'f', cmd 'Telescope find_files' },
+      { 'F', ':lua require("telescope.builtin").find_files({ cwd = "~", hidden = true})<cr>' },
       { 'g', cmd 'Telescope live_grep' },
       { 'o', cmd 'Telescope oldfiles', { desc = 'recently opened files' } },
       { 'h', cmd 'Telescope help_tags', { desc = 'vim help' } },
@@ -88,6 +90,7 @@ Hydra({
       { 'k', cmd 'Telescope keymaps' },
       { 'O', cmd 'Telescope vim_options' },
       { 'r', cmd 'Telescope resume' },
+      { 's', cmd 'SessionManager load_session' },
       { 'p', cmd 'Telescope projects', { desc = 'projects' } },
       { '/', cmd 'Telescope current_buffer_fuzzy_find', { desc = 'search in file' } },
       { '?', cmd 'Telescope search_history',  { desc = 'search history' } },
