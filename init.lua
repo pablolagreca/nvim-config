@@ -161,6 +161,21 @@ require('packer').startup(function(use)
     end
   })
 
+  -- Plugin for organizing work and documentation.
+  use {
+    'phaazon/mind.nvim',
+    branch = 'v2.2',
+    requires = { 'nvim-lua/plenary.nvim' },
+    config = function()
+      require 'mind'.setup({
+        persistence = {
+          state_path = '~/Google Drive/My Drive/Mind/global-mind.json',
+          data_dir = "~/Google Drive/My Drive/Mind/global-data/",
+        }
+      })
+    end
+  }
+
   use {
     'phaazon/hop.nvim',
     branch = 'v2', -- optional but strongly recommended
@@ -260,10 +275,29 @@ require('packer').startup(function(use)
 
   -- Markdown
   -- install without yarn or npm
+  vim.g.mkdp_auto_start = 0
+  vim.g.mkdp_auto_close = 0
   use({
     "iamcco/markdown-preview.nvim",
     run = function() vim.fn["mkdp#util#install"]() end,
   })
+  -- Plugin for local history of files
+  -- requires to execute: pip3 install pynvim and then run :UpdateRemotePlugins in nvim
+  vim.g.local_history_path = vim.fn.stdpath('data') .. '/local-history/'
+  use {
+    'dinhhuy258/vim-local-history'
+  }
+  -- Plugin for auto-save.
+  use({
+    "Pocco81/auto-save.nvim",
+    config = function()
+      require("auto-save").setup {
+        -- your config goes here
+        -- or just leave it empty :)
+      }
+    end,
+  })
+
   -- TODO - this plugin should be install correctly with the settings above but it is not. We need to do the following manually to make it work:
   --
   --  cd ~/.local/share/nvim/site/pack/packer/start/
@@ -443,11 +477,12 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 -- See `:help lualine.txt`
 require('lualine').setup {
   options = {
-    icons_enabled = false,
-    theme = tokyonight,
+    icons_enabled = true,
+    -- theme = tokyonight,
     component_separators = '|',
     section_separators = '',
   },
+  sections = { lualine_c = { "vim.fn.getcwd()" } }
 }
 
 
@@ -1008,6 +1043,22 @@ end)
 local M = {}
 local hop = require('hop')
 
+-- Function for MindToogle keybinding
+vim.api.nvim_create_user_command(
+  'UMindToogle',
+  function()
+    if (vim.g.mind_main_tree_open == false) then
+      vim.g.mind_main_tree_open = true
+      vim.api.nvim_command("MindOpenMain")
+      return "mindopenmain"
+    else
+      vim.g.mind_main_tree_open = false
+      vim.api.nvim_command("MindClose")
+    end
+  end,
+  {}
+)
+
 function M.setup()
   local whichkey = require "which-key"
 
@@ -1094,6 +1145,8 @@ function M.setup()
       name = "Utilities",
       d = { "<cmd>CD<cr>", "Show diff" },
       D = { "<cmd>TCV<cr>", "Enable/disable diff" },
+      m = { "<cmd>UMindToogle<cr>", "Mind Main Tree" },
+      M = { "<cmd>MarkdownPreview<cr>", "Markdown Preview" },
       t = { "<cmd>FloatermNew<cr>", "New terminal" },
       u = { "<cmd>FloatermToggle<cr>", "Terminal toggle" },
       y = { "<cmd>FloatermNext<cr>", "Next terminal" },
