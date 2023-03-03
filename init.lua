@@ -136,7 +136,7 @@ require('packer').startup(function(use)
         sessions_dir = Path:new(vim.fn.stdpath('data'), 'sessions'), -- The directory where the session files will be saved.
         path_replacer = '__', -- The character to which the path separator will be replaced for session files.
         colon_replacer = '++', -- The character to which the colon symbol will be replaced for session files.
-        autoload_mode = require('session_manager.config').AutoloadMode.LastSession, -- Define what to do when Neovim is started without arguments. Possible values: Disabled, CurrentDir, LastSession
+        autoload_mode = require('session_manager.config').AutoloadMode.CurrentDir, -- Define what to do when Neovim is started without arguments. Possible values: Disabled, CurrentDir, LastSession
         autosave_last_session = true, -- Automatically save last session on exit and on session switch.
         autosave_ignore_not_normal = true, -- Plugin will not save a session when no buffers are opened, or all of them aren't writable or listed.
         autosave_ignore_dirs = {}, -- A list of directories where the session will not be autosaved.
@@ -176,6 +176,7 @@ require('packer').startup(function(use)
     end
   }
 
+  -- Plugin to jump directly to anywhere
   use {
     'phaazon/hop.nvim',
     branch = 'v2', -- optional but strongly recommended
@@ -184,6 +185,15 @@ require('packer').startup(function(use)
       require 'hop'.setup { keys = 'etovxqpdygfblzhckisuran' }
     end
   }
+ 
+  -- Header for buffers with name and the list of open buffers
+  use { 'akinsho/bufferline.nvim',
+    tag = "v3.*"
+    , requires = 'nvim-tree/nvim-web-devicons'
+  }
+
+  -- To navigate outside vim to tmux terminals
+  use { 'christoomey/vim-tmux-navigator' }
 
   use { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
@@ -445,7 +455,7 @@ vim.opt.completeopt = 'menuone,noselect'
 -- [[ Basic Keymaps ]]
 -- Set <space> as the leader key
 -- See `:help mapleader`
---  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
+--  NOTE: Must happen before plugins are required (otherwise wrong leader will be usedf
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
@@ -494,6 +504,7 @@ require('Comment').setup()
 require('hop').setup({
   case_insensitive = false
 })
+require("bufferline").setup{}
 
 
 -- Gitsigns
@@ -849,7 +860,120 @@ require('persistent-breakpoints').setup {
   load_breakpoints_event = { "BufReadPost" }
 }
 
-require('go').setup()
+-- GO plugin configuration
+require('go').setup({
+
+  disable_defaults = false, -- true|false when true set false to all boolean settings and replace all table
+  -- settings with {}
+  go='go', -- go command, can be go[default] or go1.18beta1
+  goimport='gopls', -- goimport command, can be gopls[default] or goimport
+  fillstruct = 'gopls', -- can be nil (use fillstruct, slower) and gopls
+  gofmt = 'gofumpt', --gofmt cmd,
+  max_line_len = 128, -- max line length in golines format, Target maximum line length for golines
+  tag_transform = false, -- can be transform option("snakecase", "camelcase", etc) check gomodifytags for details and more options
+  tag_options = 'json=omitempty', -- sets options sent to gomodifytags, i.e., json=omitempty
+  gotests_template = "", -- sets gotests -template parameter (check gotests for details)
+  gotests_template_dir = "", -- sets gotests -template_dir parameter (check gotests for details)
+  comment_placeholder = '' ,  -- comment_placeholder your cool placeholder e.g. ﳑ       
+  icons = {breakpoint = '🧘', currentpos = '🏃'},  -- setup to `false` to disable icons setup
+  verbose = false,  -- output loginf in messages
+  lsp_cfg = false, -- true: use non-default gopls setup specified in go/lsp.lua
+                   -- false: do nothing
+                   -- if lsp_cfg is a table, merge table with with non-default gopls setup in go/lsp.lua, e.g.
+                   --   lsp_cfg = {settings={gopls={matcher='CaseInsensitive', ['local'] = 'your_local_module_path', gofumpt = true }}}
+  lsp_gofumpt = false, -- true: set default gofmt in gopls format to gofumpt
+  lsp_on_attach = nil, -- nil: use on_attach function defined in go/lsp.lua,
+                       --      when lsp_cfg is true
+                       -- if lsp_on_attach is a function: use this function as on_attach function for gopls
+  lsp_keymaps = true, -- set to false to disable gopls/lsp keymap
+  lsp_codelens = true, -- set to false to disable codelens, true by default, you can use a function
+  -- function(bufnr)
+  --    vim.api.nvim_buf_set_keymap(bufnr, "n", "<space>F", "<cmd>lua vim.lsp.buf.formatting()<CR>", {noremap=true, silent=true})
+  -- end
+  -- to setup a table of codelens
+  lsp_diag_hdlr = true, -- hook lsp diag handler
+  lsp_diag_underline = true,
+  -- virtual text setup
+  lsp_diag_virtual_text = { space = 0, prefix = "" },
+  lsp_diag_signs = true,
+  lsp_diag_update_in_insert = false,
+  lsp_document_formatting = true,
+  -- set to true: use gopls to format
+  -- false if you want to use other formatter tool(e.g. efm, nulls)
+ lsp_inlay_hints = {
+    enable = true,
+    -- Only show inlay hints for the current line
+    only_current_line = false,
+    -- Event which triggers a refersh of the inlay hints.
+    -- You can make this "CursorMoved" or "CursorMoved,CursorMovedI" but
+    -- not that this may cause higher CPU usage.
+    -- This option is only respected when only_current_line and
+    -- autoSetHints both are true.
+    only_current_line_autocmd = "CursorHold",
+    -- whether to show variable name before type hints with the inlay hints or not
+    -- default: false
+    show_variable_name = true,
+    -- prefix for parameter hints
+    parameter_hints_prefix = " ",
+    show_parameter_hints = true,
+    -- prefix for all the other hints (type, chaining)
+    other_hints_prefix = "=> ",
+    -- whether to align to the lenght of the longest line in the file
+    max_len_align = false,
+    -- padding from the left if max_len_align is true
+    max_len_align_padding = 1,
+    -- whether to align to the extreme right or not
+    right_align = false,
+    -- padding from the right if right_align is true
+    right_align_padding = 6,
+    -- The color of the hints
+    highlight = "Comment",
+  },
+  gopls_cmd = nil, -- if you need to specify gopls path and cmd, e.g {"/home/user/lsp/gopls", "-logfile","/var/log/gopls.log" }
+  gopls_remote_auto = true, -- add -remote=auto to gopls
+  gocoverage_sign = "█",
+  sign_priority = 5, -- change to a higher number to override other signs
+  dap_debug = true, -- set to false to disable dap
+  dap_debug_keymap = true, -- true: use keymap for debugger defined in go/dap.lua
+                           -- false: do not use keymap in go/dap.lua.  you must define your own.
+                           -- windows: use visual studio keymap
+  dap_debug_gui = {}, -- bool|table put your dap-ui setup here set to false to disable
+  dap_debug_vt = { enabled_commands = true, all_frames = true }, -- bool|table put your dap-virtual-text setup here set to false to disable
+
+  dap_port = 38697, -- can be set to a number, if set to -1 go.nvim will pickup a random port
+  dap_timeout = 15, --  see dap option initialize_timeout_sec = 15,
+  dap_retries = 20, -- see dap option max_retries
+  build_tags = "tag1,tag2", -- set default build tags
+  textobjects = true, -- enable default text jobects through treesittter-text-objects
+  test_runner = 'go', -- one of {`go`, `richgo`, `dlv`, `ginkgo`, `gotestsum`}
+  verbose_tests = true, -- set to add verbose flag to tests deprecated, see '-v' option
+  run_in_floaterm = false, -- set to true to run in float window. :GoTermClose closes the floatterm
+                           -- float term recommend if you use richgo/ginkgo with terminal color
+
+  floaterm = {   -- position
+    posititon = 'auto', -- one of {`top`, `bottom`, `left`, `right`, `center`, `auto`}
+    width = 0.45, -- width of float window if not auto
+    height = 0.98, -- height of float window if not auto
+  },
+  trouble = false, -- true: use trouble to open quickfix
+  test_efm = false, -- errorfomat for quickfix, default mix mode, set to true will be efm only
+  luasnip = false, -- enable included luasnip snippets. you can also disable while add lua/snips folder to luasnip load
+  --  Do not enable this if you already added the path, that will duplicate the entries
+  on_jobstart = function(cmd) _=cmd end, -- callback for stdout
+  on_stdout = function(err, data) _, _ = err, data end, -- callback when job started
+  on_stderr = function(err, data)  _, _ = err, data  end, -- callback for stderr
+  on_exit = function(code, signal, output)  _, _, _ = code, signal, output  end, -- callback for jobexit, output : string
+})
+-- Foramt code on save
+local format_sync_grp = vim.api.nvim_create_augroup("GoFormat", {})
+vim.api.nvim_create_autocmd("BufWritePre", {
+  pattern = "*.go",
+  callback = function()
+    require('go.format').goimport()
+    require('go.format').gofmt()
+  end,
+  group = format_sync_grp,
+})
 
 local dap, dapui = require("dap"), require("dapui")
 dapui.setup({
@@ -950,18 +1074,16 @@ dap.configurations.java = {
     port = 5005
   }
 }
-
-
--- dap.configurations.go = {
---   {
---     type = 'go';
---     name = 'Debug';
---     request = 'launch';
---     showLog = true;
---     program = "${file}";
---     dlvToolPath = vim.fn.exepath('dlv')  -- Adjust to where delve is installed
---   },
--- }
+dap.configurations.go = {
+  {
+    type = 'go',
+    name = 'Debug',
+    request = 'launch',
+    showLog = true,
+    program = "${file}",
+    dlvToolPath = vim.fn.exepath('dlv') -- Adjust to where delve is installed
+  },
+}
 
 function show_dap_centered_scopes()
   local widgets = require 'dap.ui.widgets'
@@ -972,6 +1094,7 @@ function attach_to_debug()
   dap.continue()
 end
 
+-- To show values for variables during debug within the buffer file.
 require('nvim-dap-virtual-text').setup()
 
 -- run debug
@@ -1011,9 +1134,24 @@ function get_spring_boot_runner(profile, debug)
   return 'mvn spring-boot:run -o ' .. profile_param .. debug_param
 end
 
-function run_spring_boot(debug)
+local function run_spring_boot(debug)
   vim.cmd('tab new "running app"')
   vim.cmd('term ' .. get_spring_boot_runner(method_name, debug))
+end
+
+local function run(debug)
+  local cwd = vim.fn.getcwd()
+  print('CWD is: ' .. cwd)
+  print('test pom: ' .. vim.fn.filereadable(cwd .. '/pom.xml'))
+  if vim.fn.filereadable(cwd .. '/pom.xml') ~= 0 then
+    run_spring_boot(debug)
+  elseif vim.fn.filereadable(cwd .. '/go.mod') ~= 0 then
+    if debug then
+      vim.cmd('GoDebug')
+    else
+      vim.cmd('GoRun')
+    end
+  end
 end
 
 --TODO CMP setup for debugger REPL: https://www.youtube.com/watch?v=kbRIosrvof0
@@ -1039,6 +1177,9 @@ map({ "i", "v", "n", "s" }, "<C-s>", "<cmd>w<cr><esc>", { desc = "Save file" })
 map("i", "<C-l>", function()
   return require("core.utils.functions").escapePair()
 end)
+
+-- debuggin
+map("v", "<M-k>", ":lua require('dapui').eval()<CR>", { desc = "Evaluate" })
 
 local M = {}
 local hop = require('hop')
@@ -1105,7 +1246,7 @@ function M.setup()
         "<cmd>%bd|e#|bd#<cr>",
         "Close all but the current buffer",
       },
-      d = { "<cmd>Bdelete<cr>", "Close buffer" },
+      d = { "<cmd>Bclose<cr>", "Close buffer" },
     },
     c = {
       name = "Code",
@@ -1130,10 +1271,10 @@ function M.setup()
       o = { ":lua require('dapui').open()<cr>", "Open debugger UI" },
       c = { ":lua require('dapui').close()<cr>", "Close debugger UI" },
       C = { ":lua require('persistent-breakpoints.api').clear_all_breakpoints()<cr>", "Clear all breakpoints" },
-      b = { ":lua require'dap'.toggle_breakpoint()<cr>", "Toogle breakpoint" },
+      b = { ":lua require('persistent-breakpoints.api').set_breakpoint()<cr>", "Toogle breakpoint" },
       B = { ":lua require('persistent-breakpoints.api').set_conditional_breakpoint()<cr>", "Toogle conditional endpoint" },
       l = { ":lua require'dap'.toggle_breakpoint(nil, nil, vim.fn.input('Log: '))<cr>", "Toogle log breakpoint" },
-      r = { ":lua request'dap'.repl.open()<cr>", "Open REPL" },
+      r = { ":lua request'dapui'.float_element('repl')<cr>", "Open REPL" },
       s = { ":lua show_dap_centered_scopes()<cr>", "Show debug scopes" }
     },
     e = {
@@ -1204,7 +1345,7 @@ function M.setup()
     -- D = { ":lua vim.lsp.buf.peek_definition()<cr>", "Go to declaration" },
     -- e = { ":lua vim.lsp.buf.show_line_diagnostics()<cr>", "Show line diagnostics" },
     -- h = { "<cmd>Lspsaga hover_doc<CR>", "Hover docs" },
-    i = { ":lua vim.lsp.buf.implementation()<cr>", "Go to implementation" },
+    i = { ":lua require('telescope.builtin').lsp_implementations()<cr>", "Go to implementation" },
     k = { "<cmd>Lspsaga hover_doc ++keep<CR>", "Hover docs - keep window" },
     o = { "<cmd>Lspsaga outline<CR>", "Toggle outline" },
     r = { ":lua require('telescope.builtin').lsp_references()<cr>", "Find references" },
@@ -1219,8 +1360,8 @@ function M.setup()
   topLevelMappings["<F6>"] = { ":lua require'dap'.step_over()<cr>", "Debug - Step over" }
   topLevelMappings["<F7>"] = { ":lua require'dap'.step_into()<cr>", "Debug - Step into" }
   topLevelMappings["<F8>"] = { ":lua require'dap'.step_out()<cr>", "Debug - Step out" }
-  vim.keymap.set("n", "<F10>", function() run_spring_boot() end)
-  vim.keymap.set("n", "<F11>", function() run_spring_boot(true) end)
+  vim.keymap.set("n", "<F10>", function() run() end)
+  vim.keymap.set("n", "<F11>", function() run(true) end)
   topLevelMappings["<F10>"] = { "Run application" }
   topLevelMappings["<F11>"] = { "Debug application" }
 
@@ -1276,6 +1417,7 @@ function M.setup()
   vim.cmd('autocmd FileType go lua GoMappings()')
   function GoMappings()
     mappings.c.o = { ":lua vim.lsp.buf.organize_imports()<cr>", "Organize imports" }
+    mappings.d.b = { "<cmd>GoBreakToggle<cr>", "Toogle breakpoint" }
     whichkey.register(mappings, opts)
   end
 
