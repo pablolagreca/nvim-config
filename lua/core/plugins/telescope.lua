@@ -39,6 +39,14 @@ telescope.setup({
   pickers = {
     find_files = {
       hidden = false,
+      find_command = {
+        "fd",
+        ".",
+        "--type",
+        "file",
+        "--hidden",
+        "--strip-cwd-prefix"
+      }
     },
     buffers = {
       ignore_current_buffer = true,

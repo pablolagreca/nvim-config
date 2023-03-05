@@ -187,10 +187,10 @@ require('packer').startup(function(use)
   }
  
   -- Header for buffers with name and the list of open buffers
-  use { 'akinsho/bufferline.nvim',
-    tag = "v3.*"
-    , requires = 'nvim-tree/nvim-web-devicons'
-  }
+  -- use { 'akinsho/bufferline.nvim',
+  --   tag = "v3.*"
+  --   , requires = 'nvim-tree/nvim-web-devicons'
+  -- }
 
   -- To navigate outside vim to tmux terminals
   use { 'christoomey/vim-tmux-navigator' }
@@ -215,6 +215,8 @@ require('packer').startup(function(use)
     requires = { 'hrsh7th/cmp-nvim-lsp', 'L3MON4D3/LuaSnip', 'saadparwaiz1/cmp_luasnip',
       'hrsh7th/cmp-buffer', 'hrsh7th/cmp-path', 'rcarriga/cmp-dap', 'hrsh7th/cmp-vsnip', 'hrsh7th/vim-vsnip' },
   }
+  -- Collections of snippets for programming languages
+  use "rafamadriz/friendly-snippets"
 
   -- icons in Autocompletion
   use 'onsails/lspkind.nvim'
@@ -504,7 +506,7 @@ require('Comment').setup()
 require('hop').setup({
   case_insensitive = false
 })
-require("bufferline").setup{}
+-- require("bufferline").setup{}
 
 
 -- Gitsigns
@@ -662,6 +664,7 @@ require('fidget').setup()
 local cmp = require 'cmp'
 local luasnip = require 'luasnip'
 
+
 cmp.setup {
   snippet = {
     expand = function(args)
@@ -671,6 +674,7 @@ cmp.setup {
   mapping = cmp.mapping.preset.insert {
     ['<C-d>'] = cmp.mapping.scroll_docs( -4),
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
+    ['<C-e>'] = cmp.mapping.close(),
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<CR>'] = cmp.mapping.confirm {
       behavior = cmp.ConfirmBehavior.Replace,
@@ -712,11 +716,15 @@ cmp.setup {
       end
     })
   },
+  experimental = {
+    ghost_text = true,
+  },
   enabled = function() -- for cmp-dap
     return vim.api.nvim_buf_get_option(0, "buftype") ~= "prompt"
         or require("cmp_dap").is_dap_buffer()
   end
 }
+
 
 --for cmp-dap
 require("cmp").setup.filetype({ "dap-repl", "dapui_watches", "dapui_hover" }, {
@@ -1162,13 +1170,10 @@ end
 -- vim: ts=2 sts=2 sw=2 et
 --
 local map = vim.keymap.set
--- paste over currently selected text without yanking it
-map("v", "p", '"_dp')
-map("v", "P", '"_dP')
 
 -- switch buffer
-map("n", "<tab>", "<cmd>bnext<cr>", { desc = "Next buffer" })
-map("n", "<S-tab>", "<cmd>bprevious<cr>", { desc = "Prev buffer" })
+-- map("n", "<tab>", "<cmd>bnext<cr>", { desc = "Next buffer" })
+-- map("n", "<S-tab>", "<cmd>bprevious<cr>", { desc = "Prev buffer" })
 
 -- save like your are used to
 map({ "i", "v", "n", "s" }, "<C-s>", "<cmd>w<cr><esc>", { desc = "Save file" })
@@ -1178,7 +1183,7 @@ map("i", "<C-l>", function()
   return require("core.utils.functions").escapePair()
 end)
 
--- debuggin
+-- debuggin - TODO review if this still makes sense.
 map("v", "<M-k>", ":lua require('dapui').eval()<CR>", { desc = "Evaluate" })
 
 local M = {}
@@ -1324,7 +1329,6 @@ function M.setup()
   }
 
   local topLevelMappings = {}
-  topLevelMappings["<tab>"] = { "<cmd>e#<cr>", "Prev buffer" }
   topLevelMappings["["] = { d = "Previous diagnostic" }
   topLevelMappings["]"] = { d = "Next diagnostic" }
   topLevelMappings["g"] = {
