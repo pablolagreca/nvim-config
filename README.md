@@ -1,35 +1,4 @@
-# Neovim Configuration
-
-This is my personal neovim configuration that I use for programming, documenting and pretty much any text file editing or development task that requires manipulating text based files.
-
-
-## Installation
-
-TODO install nvim
-
-### preservim / vim-markdown
-
-Plugin for markdown preview
-
-Before adding preservim/vim-markdown do
-
-	git clone https://github.com/preservim/vim-markdown.git
-	cd vim-markdown
-	sudo make install
-	vim-addon-manager install markdown
-
-Then add the plugin:
-
-### Java Language Server
-
-Use 'jdtls' from eclipse. To install follow this [video](https://www.youtube.com/watch?v=94IU4cBdhfM). Similar configuration is explained in the plugin page for using [jdtls with nvim](https://github.com/mfussenegger/nvim-jdtls)
-
-
-
-
-
-
-# AMC Deployer  
+# AMC Deployer
 
 ## Main classes
 TODO add links to classes in GitHub
@@ -68,68 +37,85 @@ Defines a deployment specification. Each time an update (add, delete, update) to
 
 ## Components interaction
 
-### Deployment
-```plantuml
-@startuml
-skinparam maxMessageSize 20
+```mermaid
+sequenceDiagram
+  client ->> customer: hola
+  customer ->> product: want
+  product ->> a: d 
+  a ->> b: b
+  b ->> c: sd
+```
 
-Client ->> AMCDeployerAPI : PATCH /deployments/{deploymentId}
-AMCDeployerAPI ->> AMCDeployer
-AMCDeployer ->> AMCAtlasAPI: GET /api/v2\n/organizations/{orgId}\n/providers/{targetProviderCode}\n/targets/{targetId}
-note right: Apply decorations \nfor secrets and \nasset references
-box "HTTP API"
-  participant AMCDecoratorAPI #lightblue
-end box
+### Deployment - Initial request
+```mermaid
+sequenceDiagram
+
+Client ->> AMCDeployerAPI : PATCH /deployments<br>/{deploymentId}
+AMCDeployerAPI ->> AMCDeployer: update <br>deployment
+AMCDeployer ->> AMCAtlasAPI: GET /api/v2<br>/organizations/{orgId}<br>/providers/{targetProviderCode}<br>/targets/{targetId}
+note right of AMCDeployer: Apply decorations <br>for secrets and <br>asset references
+participant AMCDecoratorAPI 
 alt changeSpec?
- AMCDeployer ->> AMCDecoratorAPI : HTTP /specs/{version}/framework - processSpec(DeploymentSpecDTO) : ProcessedSpecDTO 
+   rect rgb(174, 237, 245)
+     AMCDeployer ->> AMCDecoratorAPI : HTTP /specs<br>/{version}/framework <br>processSpec(DeploymentSpecDTO): <br>ProcessedSpecDTO 
+   end
 end
 
 alt changeSpec || changeSpecVersion
   AMCDeloyer ->> Deployment : updateReplicas
 end
 
-box "QuotasBroker"
-  participant quotas.Deployments #FF5733
-end box
+  participant quotas.Deployments 
 alt updatedDeployment.specVersion != previousSpecVersion && shouldTriggerPipeline (always true)
-  AMCDeployer ->> quotas.Deployments : PipelineRequestMessage - quotas.Deployments
+
+rect rgb(237, 76, 119)
+  AMCDeployer ->> quotas.Deployments : PipelineRequestMessage <br>quotas.Deployments
 end
+end
+
+```
+
+### Deployment - Quotas 
+```mermaid
+sequenceDiagram
 
 QuotasBroker ->> AMCQuotas : quotas.Deployments
 
-box "QuotasBroker"
-  participant quotas.DeploymentsReport #FF5733
-end box
+participant quotas.DeploymentsReport 
 
-box "QuotasBroker"
-  participant quotas.Reports #FF5733
-end box
+participant quotas.Reports 
 
 alt if operationType.delete
 
-  AMCQuotas ->> quotas.DeploymentsReport : Deployment.APPROVED 
-  note left: deletes all stored \nreports for the \ndeployment and sends \ndirectly an approval.
+  rect rgb(237, 76, 119)
+    AMCQuotas ->> quotas.DeploymentsReport : Deployment.APPROVED 
+  end
+  note left of AMCQuotas: deletes all stored <br>reports for the <br>deployment and sends <br>directly an approval.
 
 else if no reports to be applied to the deployment 
 
-  AMCQuotas ->> quotas.DeploymentsReport : Deployment.APPROVED 
+  rect rgb(237, 76, 119)
+    AMCQuotas ->> quotas.DeploymentsReport : Deployment.APPROVED 
+  end
 
 else if scripting error processing report 
 
-  AMCQuotas ->> quotas.DeploymentsReport : Deployment.REJECTED 
+  rect rgb(237, 76, 119)
+    AMCQuotas ->> quotas.DeploymentsReport : Deployment.REJECTED 
+  end
 
 else 
 
   alt if operationType.Sync
 
-    AMCQuotas ->> AMCQuotas : Filter reports by reportsName input.
-    note right: There's an input \nparam for SYNC \nwhich are the set \nof reports to process.
+    AMCQuotas ->> AMCQuotas : Filter reports <br>by reportsName <br>input.
+    note right of AMCQuotas: There's an input <br>param for SYNC <br>which are the set <br>of reports to process.
 
   end
   
   loop for each report
 
-    AMCQuotas ->> quotas.Reports : send reports to process
+    AMCQuotas ->> quotas.Reports : send reports <br>to process
 
   end
 
@@ -139,51 +125,53 @@ quotas.Reports ->> AMCQuotas : ReportProcessMessage
 
 alt operationType.SYNC
 
-  AMCQuotas ->> AMCQuotas : report.setStatus(APPROVED)
+  AMCQuotas ->> AMCQuotas : report<br>.setStatus(APPROVED)
 
 else 
 
   alt report has LimitProvider
-    box "HTTP API"
-      participant LimitProviderAPI #lightblue
-    end box
-    AMCQuotas ->> LimitProviderAPI : getLimit
+      participant LimitProviderAPI 
+
+    rect rgb(174, 237, 245)
+      AMCQuotas ->> LimitProviderAPI : getLimit
+    end
 
     alt usage within limits of deployment request
 
-      AMCQuotas ->> AMCQuotas : report.setStatus(APPROVED)
+      AMCQuotas ->> AMCQuotas : report<br>.setStatus(APPROVED)
     else 
 
-      AMCQuotas ->> AMCQuotas : report.setStatus(REJECTED)
+      AMCQuotas ->> AMCQuotas : report<br>.setStatus(REJECTED)
     end
 
   end
   
 end
 
-box "QuotasBroker"
- participant quotas.Status #FF5733 
-end box
-AMCQuotas ->> quotas.Status : report
+ participant quotas.Status  
+
+rect rgb(237, 76, 119)
+  AMCQuotas ->> quotas.Status : report
+end
 
 quotas.Status ->> AMCQuotas : ReportProcessMessage
 AMCQuotas ->> AMCQuotas : update ReportProgressResult with ReportProcessMessage and storage
 
 alt if ReportProgressResult.isComplete
 
-  AMCQuotas ->> AMCQuotas : select nodes to use for deployment
+  AMCQuotas ->> AMCQuotas : select nodes <br>to use for <br>deployment
 
   alt if (there are reports without node rejected OR (not enough nodes available AND at least one report by node))
 
-    AMCQuotas ->> AMCQuotas : ReportProcessMessage.setStatus(REJECTED)
+    AMCQuotas ->> AMCQuotas : ReportProcessMessage<br>.setStatus(REJECTED)
 
   else 
 
-    AMCQuotas ->> AMCQuotas : ReportProgressResult.setStatus(APPROVED)
+    AMCQuotas ->> AMCQuotas : ReportProgressResult<br>.setStatus(APPROVED)
 
   end
 
-  AMCQuotas ->> quotas.DeploymentsReport : Deployment(ReportProgressResult.getStatus())
+  AMCQuotas ->> quotas.DeploymentsReport : Deployment(<br>ReportProgressResult<br>.getStatus())
   
 else 
 
@@ -193,31 +181,27 @@ end
 
 quotas.DeploymentsReport ->> AMCDeployer : Deployment Status
 
-box "Decorator Broker"
-  participant decorator.SpecDecorationRequest #FF5733
-end box
+  participant decorator.SpecDecorationRequest 
 
-box "Transport Layer Broker"
-  participant "{nodeInfo.location}.Provider\n.{target.provider.code}.Agent\n.{nodeInfo.id}.State" as transportLayer 
-  note left : TODO translate parameters to actual meaning.
-end box
+  participant transportLayer 
+  note left of AMCDeployer: TODO translate <br>parameters to <br>actual meaning.
 
 alt if decoration feature enabled 
 
-  
-  AMCDeployer ->> decorator.SpecDecorationRequest : SpecDecorationRequest
-
+  rect rgb(237, 76, 119)
+    AMCDeployer ->> decorator.SpecDecorationRequest : SpecDecorationRequest
+  end
 
 else 
 
   loop for each node to deploy 
-    AMCDeployer ->> transportLayer : node deployment message (DeploymentMessage) 
+    AMCDeployer ->> transportLayer : node deployment <br>message <br>(DeploymentMessage) <br>{nodeInfo.location}<br>.Provider.{target.provider.code}<br>.Agent.{nodeInfo.id}<br>.State 
   end
 
 end
-
-@enduml
 ```
+
+
 Questions: 
  * In the diagram above there's an update in the deployment and the specVersion may have change. Examples of changes in a specVersion and how it can affect a deployment?
 <!--toc:start-->
@@ -226,81 +210,96 @@ Questions:
   - [Deployment Update](#deployment-update)
   <!--toc:end-->
 
-## Decoration Process
+## Deployment - Decoration Process
 
 Description: This is the entire process for decorating a specification. A request is sent to queue spec.SpecDecorationRequest in the Decorator Broker TODO complete
 
-```plantuml
+```mermaid
+sequenceDiagram
+  participant decorator.SpecDecorationRequest 
+  participant AMCDecorator
+  participant AtlasAPI 
+  participant decorator.SpecDecorationResult 
+  participant decorator.SpecDecorationProviderRequest 
+  participant decorator.SpecDecorationProgress 
+  participant DecorationProviderAPI 
+  participant CSMAPI 
+  participant decorator.DeployDestroy 
 
-@startuml
-skinparam maxMessageSize 20 
-
-box "Decorator Broker"
-  participant decorator.SpecDecorationRequest #FF5733
-end box
-participant AMCDecorator
-box "HTTP API"
-  participant AtlasAPI #lightblue
-end box
-box "Decorator Broker"
-  participant decorator.SpecDecorationResult #FF5733
-end box
-box "Decorator Broker"
-  participant decorator.SpecDecorationProviderRequest #FF5733
-end box
-box "Decoration Broker"
-  participant decorator.SpecDecorationProgress #FF5733
-end box
-box "HTTP API"
-  participant DecorationProviderAPI #lightblue
-end box
-box "HTTP API"
-  participant CSMAPI #lightblue
-end box
-box "Decoration Broker"
-  participant decorator.DeployDestroy #FF5733
-end box
-
-== Decoration Process - Start ==
+note right of decorator.SpecDecorationRequest: DECORATION PROCESS - START
 decorator.SpecDecorationRequest ->> AMCDecorator: send(PipelineRequestMessage)
 alt OperationType is UPSERT
 
-  AMCDecorator ->> AtlasAPI : fetch decorations configuration 
-  note left: The decoration \nconfigurations rules \n(see [[ttps://github.com/mulesoft/amc-atlas/blob/master/src/main/resources/decorators/decorators.yml decorators.yml]]) \ngets applied \nto the spec \nand those that \nmatch are the \ndecorations that \nmust be applied. \nThere are \nmany decorations \nby decorator name.
+  rect rgb(174, 237, 245)
+    AMCDecorator ->> AtlasAPI : fetch decorations configuration 
+  end
+  note left of AtlasAPI: The decoration <br>configurations rules <br>(see [[ttps://github.com/mulesoft/amc-atlas/blob/master/src/main/resources/decorators/decorators.yml decorators.yml]]) <br>gets applied <br>to the spec <br>and those that <br>match are the <br>decorations that <br>must be applied. <br>There are <br>many decorations <br>by decorator name.
 
   alt if decoration progress decorations by decorator is empty
-    AMCDecorator ->> decorator.SpecDecorationResult : send(new SpecDecorationResult(.., DecorationResult.SUCCESSFUL, ..))
+    rect rgb(237, 76, 119)
+      AMCDecorator ->> decorator.SpecDecorationResult : send(new SpecDecorationResult(.., DecorationResult.SUCCESSFUL, ..))
+    end
   else if there are decorations by decorator
     loop for each decoration to do
-      AMCDecorator ->> decorator.SpecDecorationProviderRequest: send(new SpecDecorationProviderRequest(..))
+      rect rgb(237, 76, 119)
+        AMCDecorator ->> decorator.SpecDecorationProviderRequest: send(new SpecDecorationProviderRequest(..))
+      end
     end
   end
 
 else if OperationType is DELETE
-  AMCDecorator ->> AMCDecorator: fetch SECRET type decorations stored 
-  note right #lightgreen: This seems \nnot to \nextensible. This is \nassuming that only \nthe SECRET type \ndecorations will require \ndeletion. This \nshould probable be \nmade more generic \nand the decoration \nshould declare \nif it requires \ndeletion or not.
+  rect reg(156, 247, 215) 
+    AMCDecorator ->> AMCDecorator: fetch SECRET type decorations stored 
+  end
+  note right of AMCDecorator: This seems <br>not to <br>extensible. This is <br>assuming that only <br>the SECRET type <br>decorations will require <br>deletion. This <br>should probable be <br>made more generic <br>and the decoration <br>should declare <br>if it requires <br>deletion or not.
   alt if there are no decorations
-
-    AMCDecorator ->> decorator.SpecDecorationProgress : send(new SpecDecorationProgress(.., DecorationStatus.SUCCESSFUL,.. ))
+    rect rgb(237, 76, 119)
+      AMCDecorator ->> decorator.SpecDecorationProgress : send(new SpecDecorationProgress(.., DecorationStatus.SUCCESSFUL,.. ))
+    end
   else if there are decorations
-    AMCDecorator ->> decorator.SpecDecorationProviderRequest : send(new SpecDecorationProviderRequest(.., OperationType.DELETE, ..))  
+    rect rgb(237, 76, 119)
+      AMCDecorator ->> decorator.SpecDecorationProviderRequest : send(new SpecDecorationProviderRequest(.., OperationType.DELETE, ..))  
+    end
   end
 
 else if OperationType is SYNC
-    AMCDecorator ->> decorator.SpecDecorationProgress : send(new SpecDecorationProgress(.., DecorationStatus.SUCCESSFUL,.. ))
-    note left: nothing to do \nwe just send a success \nresult.
+    rect rgb(237, 76, 119)
+      AMCDecorator ->> decorator.SpecDecorationProgress : send(new SpecDecorationProgress(.., DecorationStatus.SUCCESSFUL,.. ))
+    end
+    note left of AMCDecorator: nothing to do <br>we just send a success <br>result.
 end
 
-== Decoration Process - Decoration Provider Request ==
+note right of decorator.SpecDecorationRequest: DECORATION PROCESS - DECORATION PROVIDER REQUEST INVOCATION
+
+
+
+
+```
+
+# bla
+```mermaid
+%%{
+  init: 
+    { "sequence": 
+      { "wrap": true,
+        "diagramMarginY": 1
+      } 
+    }
+}%%
+sequenceDiagram
 decorator.SpecDecorationProviderRequest ->> AMCDecorator: send(DecorationProcessMessage)
 
 alt OperationType is UPSERT
   alt if all stored decorations are DecorationStatus.SUCCESSUL
     AMCDecorator ->> decorator.SpecDecorationProgress : send(new SpecDecorationProgress(.., DecorationStatus.SUCCESSUL, ..))
-    note left: A successful \nmessage is sent \nfor the decorations \nof this decoration \nprovider. \nTODO review why this \ncase could happen.
+    note left of AMCDecorator: A successful <br>message is sent <br>for the decorations <br>of this decoration <br>provider. <br>TODO review why this <br>case could happen.
   else if decorations hasn't being execute by the provider
+    
     AMCDecorator ->> DecorationProviderAPI : GET /{endpoint}     
-    note right #lightgreen: {endpoint} it's \ndefined in Atlas \n[[https://github.com/mulesoft/amc-atlas/blob/60d5c5dd8e0c4ec1c525e2d09af823808a9add4e/src/main/resources/decorators/decorators.yml#L62 decorator configuration]].
+
+    rect reg(156, 247, 215) 
+      note right of DecorationProviderAPI : {endpoint} it's <br>defined in Atlas <br><a href='https://github.com/mulesoft/amc-atlas/blob/60d5c5dd8e0c4ec1c525e2d09af823808a9add4e/src/main/resources/decorators/decorators.yml#L62'>decorator configuration</a>.
+    end
     alt if all decorations are successful
       AMCDecorator ->> decorator.SpecDecorationProgress: send(new SpecDecorationProgress(.., DecorationStatus.SUCCESSUL, ..))
     else if there are failed decorations
@@ -309,14 +308,13 @@ alt OperationType is UPSERT
   end
 else OperationType is DELETE
   loop for each secret decoration
-    AMCDecorator ->> CSMAPI: DELETE /secrets-manager\n/internal/api/v1\n/organizations/{orgId}\n/environments/{envId}\n/clients/{clientId}\n/secretsGroup/{secretGroupId}\n/sharedSecrets/  
-    note right: environtments/{envId} \nis optional given\n that the secret \nmay not be related \nto an env.
-  end loop
+    AMCDecorator ->> CSMAPI: DELETE /secrets-manager<br>/internal/api/v1<br>/organizations/{orgId}<br>/environments/{envId}<br>/clients/{clientId}<br>/secretsGroup/{secretGroupId}<br>/sharedSecrets/  
+    note right of CSMAPI: environtments/{envId} <br>is optional given<br> that the secret <br>may not be related <br>to an env.
+  end 
   AMCDecorator ->> decorator.SpecDecorationProgress: send(new SpecDecorationProgress(.., DecorationStatus.SUCCESSUL, ..))
 end
 
-== Decoration Process - Process Decoration Provider Results ==
-
+note right of decorator.SpecDecorationRequest: DECORATION PROCESS - DECORATION PROCESS PROVIDER RESULTS
 decorator.SpecDecorationProgress ->> AMCDeployer: send(DecorationProgressMessage)
 
 alt if OperationType.UPSERT
@@ -333,7 +331,67 @@ alt if OperationType.UPSERT
 else if OperationType.DELETE
   alt if decoration progress is successful
     AMCDeployer ->> AMCDeployer: delete decorations from DB
-    note right: Deleting secrets \nafter successfully \ndeleted them \n from CSM
+    note right of AMCDeployer: Deleting secrets <br>after successfully <br>deleted them <br> from CSM
+  end
+  alt if there's not secrets pending to be deleted
+    AMCDeployer ->> AMCDeployer: delete all decorations for this deployment
+  end
+  AMCDeployer ->> AMCDeployer: retrieve DecorationProgress from DB
+  alt there is no DecorationProgress stored 
+    AMCDeployer ->> AMCDeployer: finish process, deletion already happened 
+  else  there is DecorationProgress stored
+    alt DecorationProgress.type is DESTROY
+      AMCDeployer ->> decorator.DeployReply: send(new DestroyMessage(..))
+    else
+      AMCDeployer ->> decorator.SpecDecorationResult: send(new DecorationResult(DecorationStatus.SUCCESSUL))
+    end
+  end
+end
+decorator.SpecDecorationProviderRequest ->> AMCDecorator: send(DecorationProcessMessage)
+
+alt OperationType is UPSERT
+  alt if all stored decorations are DecorationStatus.SUCCESSUL
+    AMCDecorator ->> decorator.SpecDecorationProgress : send(new SpecDecorationProgress(.., DecorationStatus.SUCCESSUL, ..))
+    note left of AMCDecorator: A successful <br>message is sent <br>for the decorations <br>of this decoration <br>provider. <br>TODO review why this <br>case could happen.
+  else if decorations hasn't being execute by the provider
+    
+    AMCDecorator ->> DecorationProviderAPI : GET /{endpoint}     
+
+    rect reg(156, 247, 215) 
+      note right of DecorationProviderAPI : {endpoint} it's <br>defined in Atlas <br>[[https://github.com/mulesoft/amc-atlas/blob/60d5c5dd8e0c4ec1c525e2d09af823808a9add4e/src/main/resources/decorators/decorators.yml#L62 decorator configuration]].
+    end
+    alt if all decorations are successful
+      AMCDecorator ->> decorator.SpecDecorationProgress: send(new SpecDecorationProgress(.., DecorationStatus.SUCCESSUL, ..))
+    else if there are failed decorations
+      AMCDecorator ->> decorator.SpecDecorationProgress: send(new SpecDecorationProgress(.., DecorationStatus.FAILED, ..))
+    end
+  end
+else OperationType is DELETE
+  loop for each secret decoration
+    AMCDecorator ->> CSMAPI: DELETE /secrets-manager<br>/internal/api/v1<br>/organizations/{orgId}<br>/environments/{envId}<br>/clients/{clientId}<br>/secretsGroup/{secretGroupId}<br>/sharedSecrets/  
+    note right of CSMAPI: environtments/{envId} <br>is optional given<br> that the secret <br>may not be related <br>to an env.
+  end 
+  AMCDecorator ->> decorator.SpecDecorationProgress: send(new SpecDecorationProgress(.., DecorationStatus.SUCCESSUL, ..))
+end
+
+note right of decorator.SpecDecorationRequest: DECORATION PROCESS - DECORATION PROCESS PROVIDER RESULTS
+decorator.SpecDecorationProgress ->> AMCDeployer: send(DecorationProgressMessage)
+
+alt if OperationType.UPSERT
+  AMCDecorator ->> AMCDecorator: retrieve all decorations
+  alt if decorations continues in progress or decorations deleted
+    AMCDecorator ->> AMCDecorator: process finishes here and the progress message is diregarded
+  else decorations results are complete
+    alt if all decorations progress are success
+     AMCDecorator ->> decorator.SpecDecorationResult: send(new SpecDecorationResult(.., DecorationStatus.SUCCESSUL,.. )) 
+    else if there are failure decorations progress
+     AMCDecorator ->> decorator.SpecDecorationResult: send(new SpecDecorationResult(.., DecorationStatus.FAILURE,.. )) 
+    end
+  end
+else if OperationType.DELETE
+  alt if decoration progress is successful
+    AMCDeployer ->> AMCDeployer: delete decorations from DB
+    note right of AMCDeployer: Deleting secrets <br>after successfully <br>deleted them <br> from CSM
   end
   alt if there's not secrets pending to be deleted
     AMCDeployer ->> AMCDeployer: delete all decorations for this deployment
@@ -350,9 +408,6 @@ else if OperationType.DELETE
   end
 end
 
-
-@enduml
-
 ```
 
 
@@ -365,74 +420,67 @@ From:
 
 - AMC Deployer - DeploymentServiceTest.concurrencyExceptionOnRepositoryShouldBeCaught
 
-```plantuml
+```mermaid
+sequenceDiagram
 
-@startuml
-skinparam maxMessageSize 20
-box "HTTP Client"
-  actor Client #lightblue
-end box
-Client ->> DeploymentService : update(deploymentId, DeploymentUpdateRequest)\n PATCH /deploymenys/{deploymentId
-DeploymentService ->> DeploymentRepository : get(deploymentId) : Deployment
-DeploymentService ->> DeploymentService : update(Deployment, DeploymentUpdateRequest, shouldTriggerPipeline)
+  actor Client 
 
-group within update(..)
-DeploymentService ->> TargetRegistry : getTarget(orgId, targetProviderCode, targetId, envId?) : TargetInfo
-TargetRegistry ->> AtlasClient: getTarget(orgId, wtProviderCode, targetId, envId?) : TargetInfo
-box "HTTP API"
-  participant AtlasAPI #lightblue
-end box
-AtlasClient ->> AtlasAPI : GET /api/v1\n/organizations/{orgId}\n/providers/{targetProviderCode}\n/targets/{targetId} 
-DeploymentService ->> TargetService : checkTargetAvailability\n(deploymentType, target, targetProviderCode)
-TargetService ->> TypeConfiguration : getConfiguration(deploymentType) : DeploymentTypeConfiguration
-TargetService ->> TargetService : isRequireAvailability && !DeploymentTypeConfiguration.isAvailableForDeployments
-note right : in mule cloud checks if there's at least a region available
+  rect rgb(174, 237, 245)
+    Client ->> DeploymentService : update(deploymentId, DeploymentUpdateRequest)<br> PATCH /deploymenys/{deploymentId
+  end
+  DeploymentService ->> DeploymentRepository : get(deploymentId) : Deployment
+  DeploymentService ->> DeploymentService : update(Deployment, DeploymentUpdateRequest, shouldTriggerPipeline)
+  DeploymentService ->> TargetRegistry : getTarget(orgId, targetProviderCode, targetId, envId?) : TargetInfo
+  TargetRegistry ->> AtlasClient: getTarget(orgId, wtProviderCode, targetId, envId?) : TargetInfo
 
-alt if changeSpec
+  participant AtlasAPI 
+  rect rgb(174, 237, 245)
+    AtlasClient ->> AtlasAPI : GET /api/v1<br>/organizations/{orgId}<br>/providers/{targetProviderCode}<br>/targets/{targetId} 
+  end
+  DeploymentService ->> TargetService : checkTargetAvailability<br>(deploymentType, target, targetProviderCode)
+  TargetService ->> TypeConfiguration : getConfiguration(deploymentType) : DeploymentTypeConfiguration
+  TargetService ->> TargetService : isRequireAvailability && !DeploymentTypeConfiguration.isAvailableForDeployments
+  note right of TargetService : in mule cloud checks if there's at least a region available
 
-  DeploymentService ->> DeploymentService : updateSpec(Deployment, DeploymentUpdateRequest, TargetInfo)
-  DeploymentService ->> SpecProcessor : update(Deployment, updateRequest.getSpec(), TargetInfo?) : Spec
-  note right: creates  a spec and validates the spec from \nAMC or AMF
+  alt if changeSpec
 
-  alt if decoratorIntegrationEnabled
+    DeploymentService ->> DeploymentService : updateSpec(Deployment, DeploymentUpdateRequest, TargetInfo)
+    DeploymentService ->> SpecProcessor : update(Deployment, updateRequest.getSpec(), TargetInfo?) : Spec
+    note right of SpecProcessor: creates  a spec and validates the spec from <br>AMC or AMF
 
-  SpecProcessor ->> DecoratorClient : getProcessedSpec(DeploymentSpecDTO)
-  DecoratorClient ->> DecoratorClient : performRequest(url, Object:DeploymentSpecDTO):ProcessedSpecDTO
-  box "HTTP API"
-  participant AMCDecorator #lightblue
-  end box
-  DecoratorClient ->> AMCDecorator: HTTP /specs/{version}/framework
-  SpecProcessor ->> ConfigurationProcessor : getConfigurationWithoutAssets\n(DeploymentAssetType.CONFIGURATION, ProcessedSpecDTO.\ngetConfigurationWithoutSecrets())
-  note left : Deploymnet.setSpec(Spec) - updates deployment spec.
+    alt if decoratorIntegrationEnabled
+
+      SpecProcessor ->> DecoratorClient : getProcessedSpec(DeploymentSpecDTO)
+      DecoratorClient ->> DecoratorClient : performRequest(url, Object:DeploymentSpecDTO):ProcessedSpecDTO
+      participant AMCDecorator 
+
+      rect rgb(174, 237, 245)
+        DecoratorClient ->> AMCDecorator: HTTP /specs/{version}/framework
+      end
+      SpecProcessor ->> ConfigurationProcessor : getConfigurationWithoutAssets<br>(DeploymentAssetType.CONFIGURATION, ProcessedSpecDTO.<br>getConfigurationWithoutSecrets())
+      note left of ConfigurationProcessor: Deploymnet.setSpec(Spec) - updates deployment spec.
+
+    end
 
   end
 
-end
+  alt if changeSpec || changeSpecVersion
+      DeploymentService ->> DeploymentService : Deployment.updateReplicas()
+      DeploymentService ->> DeploymentRepository : save(Deployment)
+  end
 
-alt if changeSpec || changeSpecVersion
-    DeploymentService ->> DeploymentService : Deployment.updateReplicas()
-    DeploymentService ->> DeploymentRepository : save(Deployment)
-end
-
-alt if updatedDeployment.specVersion != prevVersion && shouldTriggerPipeline (always true)
-  DeploymentService ->> TargetService : getReplicationStrategy\n(Deployment.getType(), Deployment.getTargetProvider().getCode(), TargetInfo): strategy
-  DeploymentService ->> BrokerPublisherWrapper : buildAndQueueDeployment\nReportMessagesWithStrategy(Deployment, OperationType.UPSERT, strategy)
-  note right : Builds and queues the messages for deployment to the \nQuotasBroker.
-  BrokerPublisherWrapper ->> QuotasMessageFactory : buildPipelineRequestMessage\n(Deployment, OperationType.Upsert, nodesIds, strategy)
-  group within buildPipeline..
+  alt if updatedDeployment.specVersion != prevVersion && shouldTriggerPipeline (always true)
+    DeploymentService ->> TargetService : getReplicationStrategy<br>(Deployment.getType(), Deployment.getTargetProvider().getCode(), TargetInfo): strategy
+    DeploymentService ->> BrokerPublisherWrapper : buildAndQueueDeployment<br>ReportMessagesWithStrategy(Deployment, OperationType.UPSERT, strategy)
+    note right of BrokerPublisherWrapper: Builds and queues the messages for deployment to the <br>QuotasBroker.
+    BrokerPublisherWrapper ->> QuotasMessageFactory : buildPipelineRequestMessage<br>(Deployment, OperationType.Upsert, nodesIds, strategy)
     QuotasMessageFactory ->> QuotasRequestMessage : new(..) : QuotasMessageRequest
-    QuotasMessageFactory ->> BrokerMessage : quotas("quotas.Deployments", \nQuotasMessageRequest, ..) : BrokerMessage<PipelineRequestMessage>
+    QuotasMessageFactory ->> BrokerMessage : quotas("quotas.Deployments", <br>QuotasMessageRequest, ..) : BrokerMessage<PipelineRequestMessage>
+    BrokerPublisherWrapper ->> BrokerPublisher : publish(BrokerMessage<PipelineRequestMessage>)
+    participant QuotasBroker 
+    BrokerPublisher ->> QuotasBroker : publish(..) quotas.Deployments
   end
-  BrokerPublisherWrapper ->> BrokerPublisher : publish(BrokerMessage<PipelineRequestMessage>)
-  box "Quotas Broker\nquotas.Deployments"
-    participant QuotasBroker #FF5733
-  end box
-  BrokerPublisher ->> QuotasBroker : publish(..) quotas.Deployments
-end
 
-end
-
-@enduml
 ```
 
 ### Process message back from quotas - JMS Listener
@@ -440,87 +488,89 @@ end
 JMS Broker: Quotas ; queue: quotas.DeploymentsReport
 Description: Deployer Process messages coming from quotas to move deployment to next phase or update the deployment if it was rejected.
 
-```plantuml
+```mermaid
 
-@startuml
-skinparam maxMessageSize 20
-box "Quotas Broker\nquotas.DeploymentsReport"
-actor Client #FF5733
-end box
-skinparam maxMessageSize 20
-participant "BrokerService" as bs
-Client ->> bs : quotas.DeploymentReport
-bs ->> QuotasBrokerSubscriber : processAsDeployerMessagesBackFromQuotas(\nTextMessage)
-note right: TextMessage gets  transformed to  QuotasReplyNotification
-QuotasBrokerSubscriber ->> DeploymentService : findByIdAndFetchSpecs(QuotasReplyNotification.getDeploymentId())\n:Deployment
+sequenceDiagram
 
-alt QuotasReplyNotification.getStatus().equals(APPROVED)
-  QuotasBrokerSubscriber ->> DeploymentService : updateReplicasForSelectedNodes(Deployment, QuotasReplyNotification.getNodes())
-  note left: It's not directly QuotasReplyNotification.getNodes() but a curated list
+  actor Client 
+  participant "BrokerService" as bs
 
-  alt if decoratorFeatureEnabled
-    QuotasBrokerSubscriber ->> DecoratorMessageFactory : buildSpecDecorationRequestMessage(Deployment, QuotasReplyNotification.getOperationType()):\nBrokerMessage\n<PipelineRequestMessage>
-    DecoratorMessageFactory ->> PipelineMessageUtils : transformDeploymentReportInformation(Deployment, includeFeatureFlags = true) : DeploymentReportInformation
-    
-    alt includeFeatureFlags
-      
-      PipelineMessageUtils ->> TargetService : getTargetInfo(Deployment) : TargetInfo
-      PipelineMessageUtils ->> PipelineMessageUtils : targetFeatureFlags = TargetInfo.featureFlags
-      note right #lightgreen: Review feature flags usage per target when making UMP a platform
-
-    end 
-
-    DecoratorMessageFactory ->> PipelineRequestMessage : new(Deployment.id, DeploymentReportInformation)
-    DecoratorMessageFactory ->> QuotasBrokerSubscriber : BrokerMessage<PipelineRequestMessage>
-    QuotasBrokerSubscriber ->> BrokerPublisher : publish(BrokerMessage)
-    note right: Builds a pipeline request message to start our \ndeployment pipeline.
-    box "decorator.SpecDecorationRequest"
-      participant DecoratorBroker #FF5733
-    end box
-    BrokerPublisher ->> DecoratorBroker : send(BrokerMessage) decorator.SpecDecorationRequest
-
-  else
-
-    QuotasBrokerSubscriber ->> DeploymentsMessageFactory : buildMessagesForDeploymentAndSpec(Deployment, QuotasReplyNotification.getSpecVersion(), \nQuotasReplyNotification\n.getSelectedNodes())
-    DeploymentsMessageFactory ->> QuotasBrokerSubscriber : List<BrokerMessage\n<DeploymentMessage>> 
-
-    QuotasBrokerSubscriber ->> BrokerPublisher : publish(\nList<BrokerMessage<DeploymentMessage>>) 
-    box "{nodeInfo.location}.Provider.\n{target.provider.code}.\nAgent.{nodeInfo.id}.State"
-      participant "TransportLayerBroker" #FF5733
-    end box
-    BrokerPublisher ->> TransportLayerBroker : publish each deployment message
-    note right: One message \nper node is sent \nto the target to \nexecute the deployment
-    QuotasBrokerSubscriber ->> BrokerPublisher : publish(BrokerMessage)
-    note right: Build transport messages for a deployment \nand each node \nof its target.
-
+  rect rgb(237, 76, 119)
+    Client ->> bs : quotas.DeploymentReport
   end
+  bs ->> QuotasBrokerSubscriber : processAsDeployerMessagesBackFromQuotas(<br>TextMessage)
+  note right of QuotasBrokerSubscriber: TextMessage gets  transformed to  QuotasReplyNotification
+  QuotasBrokerSubscriber ->> DeploymentService : findByIdAndFetchSpecs(QuotasReplyNotification.getDeploymentId())<br>:Deployment
 
+  alt QuotasReplyNotification.getStatus().equals(APPROVED)
+    QuotasBrokerSubscriber ->> DeploymentService : updateReplicasForSelectedNodes(Deployment, QuotasReplyNotification.getNodes())
+    note left of QuotasBrokerSubscriber: It's not directly QuotasReplyNotification.getNodes() but a curated list
 
-@enduml
+    alt if decoratorFeatureEnabled
+      QuotasBrokerSubscriber ->> DecoratorMessageFactory : buildSpecDecorationRequestMessage(Deployment, QuotasReplyNotification.getOperationType()):<br>BrokerMessage<br><PipelineRequestMessage>
+      DecoratorMessageFactory ->> PipelineMessageUtils : transformDeploymentReportInformation(Deployment, includeFeatureFlags = true) : DeploymentReportInformation
+      
+      alt includeFeatureFlags
+        
+        PipelineMessageUtils ->> TargetService : getTargetInfo(Deployment) : TargetInfo
+        PipelineMessageUtils ->> PipelineMessageUtils : targetFeatureFlags = TargetInfo.featureFlags
+        
+        rect reg(156, 247, 215) 
+          note right of PipelineMessageUtils: Review feature flags usage per target when making UMP a platform
+        end
+      end 
 
+      DecoratorMessageFactory ->> PipelineRequestMessage : new(Deployment.id, DeploymentReportInformation)
+      DecoratorMessageFactory ->> QuotasBrokerSubscriber : BrokerMessage<PipelineRequestMessage>
+      QuotasBrokerSubscriber ->> BrokerPublisher : publish(BrokerMessage)
+      note right of BrokerPublisher: Builds a pipeline request message to start our <br>deployment pipeline.
+      participant DecoratorBroker 
+
+      rect rgb(237, 76, 119)
+        BrokerPublisher ->> DecoratorBroker : send(BrokerMessage) decorator.SpecDecorationRequest
+      end
+
+    else -
+
+      QuotasBrokerSubscriber ->> DeploymentsMessageFactory : buildMessagesForDeploymentAndSpec(Deployment, QuotasReplyNotification.getSpecVersion(), <br>QuotasReplyNotification<br>.getSelectedNodes())
+      DeploymentsMessageFactory ->> QuotasBrokerSubscriber : List<BrokerMessage<br><DeploymentMessage>> 
+
+      QuotasBrokerSubscriber ->> BrokerPublisher : publish(<br>List<BrokerMessage<DeploymentMessage>>) 
+      participant "TransportLayerBroker" 
+      BrokerPublisher ->> TransportLayerBroker : publish each deployment message
+      note right of TransportLayerBroker: One message <br>per node is sent <br>to the target to <br>execute the deployment
+
+      rect rgb(237, 76, 119)
+        QuotasBrokerSubscriber ->> BrokerPublisher : publish(BrokerMessage)
+      end
+      note right of BrokerPublisher: Build transport messages for a deployment and each node of its target
+    end
+  end
 ```
 
 TODO add link between both diagrams
 
-```plantuml
+```mermaid
 
-@startuml
-    Client ->> DeploymentsMessageFactory : buildMessagesFor\nDeploymentAndSpec\n(Deployment, specVersion, selectedNodes)
+sequenceDiagram
+
+    Client ->> DeploymentsMessageFactory : buildMessagesFor<br>DeploymentAndSpec<br>(Deployment, specVersion, selectedNodes)
     DeploymentsMessageFactory ->> TargetService : getTargetInfo(Deployment) : TargetInfo
-    DeploymentsMessageFactory ->> DeploymentsMessageFactory : buildMessagesForDeployment\nSpecAndTarget(Deployment, \nDeployment.getSpec(Deployment.specVersion) \nas spec, TargetInfo, \nDeployment.nodeIds) : List<BrokerMessage<DeploymentMessage>>
-    DeploymentsMessageFactory ->> DeploymentsMessageFactory : getDeploymentMessageContent\n(Deployment, \nspec, TargetInfo) \n: DeploymentMessageContent
-    DeploymentsMessageFactory ->> DecoratedSpecFactory : \ngetDecoratedSpec(\nDeployment.type, \nDeployment.name, \ndeployment.targetProvider.code, spec)\n: DecoratedSpec 
+    DeploymentsMessageFactory ->> DeploymentsMessageFactory : buildMessagesForDeployment<br>SpecAndTarget(Deployment, <br>Deployment.getSpec(Deployment.specVersion) <br>as spec, TargetInfo, <br>Deployment.nodeIds) : List<BrokerMessage<DeploymentMessage>>
+    DeploymentsMessageFactory ->> DeploymentsMessageFactory : getDeploymentMessageContent<br>(Deployment, <br>spec, TargetInfo) <br>: DeploymentMessageContent
+    DeploymentsMessageFactory ->> DecoratedSpecFactory : <br>getDecoratedSpec(<br>Deployment.type, <br>Deployment.name, <br>deployment.targetProvider.code, spec)<br>: DecoratedSpec 
 
     alt decoratorIntegrationEnabled
 
-      DeploymentsMessageFactory ->> DecoratorService : getDecoratedSpecFromDecorator(\nDeployment, spec, \nDecorationVisibility.ALL)\n: DecoratedSpecDTO
+      DeploymentsMessageFactory ->> DecoratorService : getDecoratedSpecFromDecorator(<br>Deployment, spec, <br>DecorationVisibility.ALL)<br>: DecoratedSpecDTO
       DecoratorService ->> DecoratedSpecRequestDTO : new(..)
-      DecoratorService ->> DecoratorClient : getDecoratedSpec(\nDecoratedSpecRequestDTO): \nDecoratedSpecDTO
-      box "HTTP API"
-        participant AMCDecoratorAPI #lightblue
-      end box
-      DecoratorClient ->> AMCDecoratorAPI : /spec/{version}: DecoratorSpecDTO 
-      note right: Retrieves a spec \nalready decorated
+      DecoratorService ->> DecoratorClient : getDecoratedSpec(<br>DecoratedSpecRequestDTO): <br>DecoratedSpecDTO
+        participant AMCDecoratorAPI 
+
+      rect rgb(174, 237, 245)
+        DecoratorClient ->> AMCDecoratorAPI : /spec/{version}: DecoratorSpecDTO 
+      end
+      note right of AMCDecoratorAPI: Retrieves a spec <br>already decorated
     end
 
     DeploymentsMessageFactory ->> TargetInfo : getNodes() : Set<NodeInfo>
@@ -531,19 +581,21 @@ TODO add link between both diagrams
 
       DeploymentsMessageFactory ->> DeploymentsMessageFactory : availableNodes = filter availableNodes which DeploymentState != APPLIED
       
-      note right #lightgreen: Feature flag specific for flex to avoid publishing messages to nodes which the deployment is already applied
+      rect reg(156, 247, 215) 
+        note right of DeploymentsMessageFactory: Feature flag specific for flex to avoid publishing messages to nodes which the deployment is already applied
+      end
 
     end
 
     loop availableNodes : nodeInfo 
 
-      DeploymentsMessageFactory ->> DeploymentsMessageFactory : buildMessageForNode\n(Deployment, TargetInfo, \nnodeInfo, spec, DeploymentMessageContent, \nTargetInfo.enhancedSecurity)
+      DeploymentsMessageFactory ->> DeploymentsMessageFactory : buildMessageForNode<br>(Deployment, TargetInfo, <br>nodeInfo, spec, DeploymentMessageContent, <br>TargetInfo.enhancedSecurity)
 
     end
 
-    DeploymentsMessageFactory ->> Client : List<BrokerMessage\n<DeploymentMessage>> 
+    DeploymentsMessageFactory ->> Client : List<BrokerMessage<br><DeploymentMessage>> 
 
-@enduml
+
 
 ```
 
@@ -554,9 +606,7 @@ Description: Builds and queues the messages for deployment. Based on the list of
 ``` mermaid
 sequenceDiagram
   participant Client
-  box rgb(255,87,51) 
-    participant AnyBroker 
-  end
+  participant AnyBroker 
   Client ->> BrokerPublisher: publish(List<BrokerMessage<T>>)
   loop List<BrokerMessage<T>>
     BrokerPublish ->> BrokerPublisher : processMessage(BrokerMessage<T>)
@@ -565,7 +615,9 @@ sequenceDiagram
     BrokerPublish ->> MapOfBrokerToJmsTemplate : get(BrokerMessage.getBroker()) : JmsTemplate
     BrokerPulish ->> JmsTemplate : execute(..)
     note right of JmsTemplate: Creates JMS message andsends it.
-    JmsTemplate ->> AnyBroker : publishMessage(..)
+    rect rgb(237, 76, 119)
+      JmsTemplate ->> AnyBroker : publishMessage(..)
+    end
   end
 
 ```
@@ -583,22 +635,23 @@ Configuration values are obtained from `application.yml` file which gets configu
 
 ### Get TargetInfo 
 
-```plantuml
+```mermaid
 
-@startuml
-skinparam maxMessageSize 20 
+sequenceDiagram
+
 actor Client
 Client ->> TargetService : getTargetInfo(orgId, targetProvider, targetId) : TargetInfo
 TargetService ->> AtlasClient : getTargetInfo(orgId, targetProvider, targetId, envId (empty)) : TargetInfo
-box "Atlas API"
-  participant AtlasAPI #lightblue
-end box
-AtlasClient ->> AtlasAPI : /api/v1\n/organizations/{orgId}\n/providers/{targetProvider}\n/targets/{targetId}
-note right: environment would go in the query string.
+  participant AtlasAPI 
+
+  rect rgb(174, 237, 245)
+    AtlasClient ->> AtlasAPI : /api/v1<br>/organizations/{orgId}<br>/providers/{targetProvider}<br>/targets/{targetId}
+  end
+  note right of AtlasAPI: environment would go in the query string.
 
 TargetService ->> Client : TargetInfo
 
-@enduml
+
 ```
 
 ### Publish synchronize notification - API Endpoint
@@ -608,14 +661,15 @@ API: [POST /admin/usage/sync]
 Description: Forces a synchronization of deployments status. 
 
 
-```plantuml
+```mermaid
 
-@startuml
-skinparam maxMessageSize 20
-box "HTTP Client"
-  actor Client #lightblue
-end box
-Client ->> SynchronizationController : getDeploymentsForSync(batchSize, UsageSyncRequest, organizationId)\n POST /admin/usage/sync
+sequenceDiagram
+
+actor Client 
+
+rect rgb(174, 237, 245)
+  Client ->> SynchronizationController : getDeploymentsForSync(batchSize, UsageSyncRequest, organizationId)<br> POST /admin/usage/sync
+end
 SynchronizationController ->> DeploymentService: performsSyncWithMetricsInBatches(new Date(), batchSize, body.getReportNames(), organizationId)
 SynchronizationController ->> DeploymentService: getDeploymentsWithCurrentSpecOnlyInBatchesBetweenDates(from, limitDate, batchSize, deploymentsToExclude, maybeOrganizationId) : List<Deployment>
 
@@ -627,17 +681,17 @@ loop deployments
 
       DeploymentService ->> SpecService: getSpecs(deployment.getId()) : List<Spec>
       DeploymentService ->> DeploymentService : deployment.setCurrentSpec(..)
-      note left: update spec with the \nlatest one based on \nit's creation date.
+      note left of DeploymentService: update spec with the <br>latest one based on <br>it's creation date.
 
     end
 
     DeploymnetService ->> BrokerPublisherWrapper : buildAndQueueSyncMessages(deployment, reportNames)
     BrokerPublisherWrapper ->> QuotasMessageFactory : buildSyncMessage(deployment, reportNames, deplyment.getNodeIds()) : BrokerMessage<SyncMessage>
     BrokerPublisherWrapper ->> BrokerPublisher : publish(message)
-    box "quotas.Deployments"
-      participant QuotasBroker #FF5733
-    end box
-    BrokerPublisher ->> QuotasBroker : publish(..) quotas.Deployments
+    participant QuotasBroker 
+    rect rgb(237, 76, 119)
+      BrokerPublisher ->> QuotasBroker : publish(..) quotas.Deployments
+    end
   end
 
 end
@@ -645,87 +699,91 @@ end
 SynchronizationController ->> Client : HTTP Accepted
 
 
-@enduml
+
 ```
 
 ### Process decoration result - JMS Decorator Broker - decorator.SpecDecorationResult 
 
 Description: Deployer Process messages coming from decorator to complete deployment sending the message the TL or update the deployment if it was rejected.
 
-```plantuml
+```mermaid
 
-@startuml
-skinparam maxMessageSize 20
-box "decorator.SpecDecorationResult"
-  participant DecoratorBroker #FF5733
-end box
-DecoratorBroker ->> DecoratorBrokerSubscriber : processDecorationResult\n(DecorationReplyNotification)
-DecoratorBrokerSubscriber ->> DeploymentService : findByIdAndFetchSpecs\n(DecorationMessaggeNotification.\ngetDeploymentId()) : Deployment?
+sequenceDiagram
 
-alt Deployment is not empty OR Deployment.specVErsion != DecorationResultNotification.specVErsion
+  participant DecoratorBroker 
 
-  DecoratorBrokerSubscriber ->> DecoratorBrokerSubscriber : log error spec outdated  
+  rect rgb(237, 76, 119)
+    DecoratorBroker ->> DecoratorBrokerSubscriber : processDecorationResult<br>(DecorationReplyNotification)
+  end
+  DecoratorBrokerSubscriber ->> DeploymentService : findByIdAndFetchSpecs(DecorationMessaggeNotification.<br>getDeploymentId()) : Deployment?
 
-else 
+  alt Deployment is not empty OR Deployment.specVErsion != DecorationResultNotification.specVErsion
 
-  alt DecorationReplyNotification.status is DecorationStatus.SUCCESSFUL
+    DecoratorBrokerSubscriber ->> DecoratorBrokerSubscriber : log error spec outdated  
 
-    DecoratorBrokerSubscriber ->> DeploymentsMessageFactory : buildMessagesForDeploymentAndSpec\n(Deployment, \nDecorationReplyNotification.\nspecVersion, Deployment.nodeIds) \n: List<BrokerMessage<DeploymentMessage>>
-    DeploymentsMessageFactory ->> TargetService : getTargetInfo(Deployment) : TargetInfo
-    DeploymentsMessageFactory ->> DeploymentsMessageFactory : buildMessagesForDeployment\nSpecAndTarget(Deployment, \nDeployment.getSpec(Deployment.specVersion) \nas spec, TargetInfo, \nDeployment.nodeIds) : List<BrokerMessage<DeploymentMessage>>
-    DeploymentsMessageFactory ->> DeploymentsMessageFactory : getDeploymentMessageContent\n(Deployment, \nspec, TargetInfo) \n: DeploymentMessageContent
-    DeploymentsMessageFactory ->> DecoratedSpecFactory : \ngetDecoratedSpec(\nDeployment.type, \nDeployment.name, \ndeployment.targetProvider.code, spec)\n: DecoratedSpec 
+  else 
 
-    alt decoratorIntegrationEnabled
+    alt DecorationReplyNotification.status is DecorationStatus.SUCCESSFUL
 
-      DeploymentsMessageFactory ->> DecoratorService : getDecoratedSpecFromDecorator(\nDeployment, spec, \nDecorationVisibility.ALL)\n: DecoratedSpecDTO
-      DecoratorService ->> DecoratedSpecRequestDTO : new(..)
-      DecoratorService ->> DecoratorClient : getDecoratedSpec(\nDecoratedSpecRequestDTO): \nDecoratedSpecDTO
-      box "HTTP API"
-        participant AMCDecoratorAPI #lightblue
-      end box
-      DecoratorClient ->> AMCDecoratorAPI : /spec/{version}: DecoratorSpecDTO 
-      note right: Retrieves a spec \nalready decorated
-      DeploymentsMessageFactory ->> TargetInfo : getNodes() : Set<NodeInfo>
+      DecoratorBrokerSubscriber ->> DeploymentsMessageFactory : buildMessagesForDeploymentAndSpec<br>(Deployment, <br>DecorationReplyNotification.<br>specVersion, Deployment.nodeIds) <br>: List<BrokerMessage<DeploymentMessage>>
+      DeploymentsMessageFactory ->> TargetService : getTargetInfo(Deployment) : TargetInfo
+      DeploymentsMessageFactory ->> DeploymentsMessageFactory : buildMessagesForDeployment<br>SpecAndTarget(Deployment, <br>Deployment.getSpec(Deployment.specVersion) <br>as spec, TargetInfo, <br>Deployment.nodeIds) : List<BrokerMessage<DeploymentMessage>>
+      DeploymentsMessageFactory ->> DeploymentsMessageFactory : getDeploymentMessageContent<br>(Deployment, <br>spec, TargetInfo) <br>: DeploymentMessageContent
+      DeploymentsMessageFactory ->> DecoratedSpecFactory : <br>getDecoratedSpec(<br>Deployment.type, <br>Deployment.name, <br>deployment.targetProvider.code, spec)<br>: DecoratedSpec 
 
-      DeploymentsMessageFactory ->> DeploymentsMessageFactory : availableNodes = Set<NodeInfo> filter by Deployment.nodeIDs
+      alt decoratorIntegrationEnabled
 
-      alt optimizedFlexMessagePublication AND Deployment is in standalone 
+        DeploymentsMessageFactory ->> DecoratorService : getDecoratedSpecFromDecorator(<br>Deployment, spec, <br>DecorationVisibility.ALL)<br>: DecoratedSpecDTO
+        DecoratorService ->> DecoratedSpecRequestDTO : new(..)
+        DecoratorService ->> DecoratorClient : getDecoratedSpec(<br>DecoratedSpecRequestDTO): <br>DecoratedSpecDTO
+        participant AMCDecoratorAPI 
 
-        DeploymentsMessageFactory ->> DeploymentsMessageFactory : availableNodes = filter availableNodes which DeploymentState != APPLIED
-        
-        note right #lightgreen: Feature flag specific for flex to avoid publishing messages to nodes which the deployment is already applied
+        rect rgb(174, 237, 245)
+          DecoratorClient ->> AMCDecoratorAPI : /spec/{version}: DecoratorSpecDTO 
+        end
+        note right of AMCDecoratorAPI: Retrieves a spec <br>already decorated
+        DeploymentsMessageFactory ->> TargetInfo : getNodes() : Set<NodeInfo>
+
+        DeploymentsMessageFactory ->> DeploymentsMessageFactory : availableNodes = Set<NodeInfo> filter by Deployment.nodeIDs
+
+        alt optimizedFlexMessagePublication AND Deployment is in standalone 
+
+          DeploymentsMessageFactory ->> DeploymentsMessageFactory : availableNodes = filter availableNodes which DeploymentState != APPLIED
+          
+          rect reg(156, 247, 215) 
+            note right of DeploymentsMessageFactory: Feature flag specific for flex to avoid publishing messages to nodes which the deployment is already applied
+          end
+        end
+
+        loop availableNodes : nodeInfo 
+
+          DeploymentsMessageFactory ->> DeploymentsMessageFactory : buildMessageForNode(Deployment, TargetInfo, nodeInfo, spec, DeploymentMessageContent, TargetInfo.enhancedSecurity)
+
+        end
+
+        DeploymentsMessageFactory ->> DecoratorBrokerSubscriber : List<BrokerMessage<br><DeploymentMessage>> 
 
       end
 
-      loop availableNodes : nodeInfo 
+      DecoratorBrokerSubscriber ->> BrokerPublisher : publish(<br>List<BrokerMessage<DeploymentMessage>>) 
+        participant "TransportLayerBroker" 
 
-        DeploymentsMessageFactory ->> DeploymentsMessageFactory : buildMessageForNode(Deployment, TargetInfo, nodeInfo, spec, DeploymentMessageContent, TargetInfo.enhancedSecurity)
-
+      rect rgb(237, 76, 119)
+        BrokerPublisher ->> TransportLayerBroker : publish each deployment message
       end
+      note right of TransportLayerBroker: One message <br>per node is sent <br>to the target to <br>execute the deployment
+    
+    else 
 
-      DeploymentsMessageFactory ->> DecoratorBrokerSubscriber : List<BrokerMessage\n<DeploymentMessage>> 
+      DecoratorBrokerSubscriber ->> DeploymentNotificationService : updateStatusForARejectedDeploymnet(Deployment, DecorationReplyNotification.reason, DeploymentState.FAILED)
 
     end
 
-    DecoratorBrokerSubscriber ->> BrokerPublisher : publish(\nList<BrokerMessage<DeploymentMessage>>) 
-    box "{nodeInfo.location}.Provider.\n{target.provider.code}.\nAgent.{nodeInfo.id}.State"
-      participant "TransportLayerBroker" #FF5733
-    end box
-    BrokerPublisher ->> TransportLayerBroker : publish each deployment message
-    note right: One message \nper node is sent \nto the target to \nexecute the deployment
-  
-  else 
-
-    DecoratorBrokerSubscriber ->> DeploymentNotificationService : updateStatusForARejectedDeploymnet(Deployment, DecorationReplyNotification.reason, DeploymentState.FAILED)
+    DecoratorBrokerSubscriber ->> TrackingMessageService : untrack(DecorationReplyNotification.deploymentId, DecorationReplyNotification.deploymentId, DecorationReplyNotification.specVersion)
 
   end
 
-  DecoratorBrokerSubscriber ->> TrackingMessageService : untrack(DecorationReplyNotification.deploymentId, DecorationReplyNotification.deploymentId, DecorationReplyNotification.specVersion)
 
-end
-
-@enduml
 ```
 
 ## Destroy -- Document
